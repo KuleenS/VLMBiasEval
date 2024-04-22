@@ -78,9 +78,11 @@ class UTKFace(ABC):
         elif split == "test":
             test_items = self.test_images
 
-        protected_category = self.data[self.protected_category_mode]
+        filtered_metadata = self.data[self.data.image.isin(test_items)]
 
-        labels = self.data[self.predicting_mode] 
+        protected_category = filtered_metadata[self.protected_category_mode]
+
+        labels = filtered_metadata[self.predicting_mode] 
 
         prompts = [self.prompt]*len(test_items)
 
