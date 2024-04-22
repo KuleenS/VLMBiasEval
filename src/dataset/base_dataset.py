@@ -1,6 +1,6 @@
 from abc import ABC
 
-class Dataset(ABC):
+class BaseDataset(ABC):
 
     def __init__(self, input_folder: str, output_folder: str) -> None:
         super().__init__()
