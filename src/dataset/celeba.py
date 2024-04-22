@@ -1,4 +1,3 @@
-from abc import ABC
 
 import os
 
@@ -7,15 +6,12 @@ import json
 import pandas as pd
 import numpy as np
 
+from src.dataset.base_dataset import BaseDataset
 
-class CelebA(ABC):
+class CelebA(BaseDataset):
 
     def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
-        super().__init__()
-
-        self.input_folder = input_folder
-
-        self.output_folder = output_folder
+        super().__init__(input_folder, output_folder)
 
         self.modes = ["blond_hair", "heavy_makeup"]
 
