@@ -13,15 +13,20 @@ class NIHCXR(BaseDataset):
     def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
         super().__init__(input_folder, output_folder)
 
-        self.modes = ["age", "gender"]
+        self.prediction_mode, self.protected_category_mode = mode.split()
 
-        if mode not in self.modes:
-            raise ValueError()
-
-        self.mode = mode
+        self.protected_category_modes = ["age", "gender"]
 
         self.TASKS_NIH = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia',
             'Infiltration', 'Mass', 'No Finding', 'Nodule', 'Pleural Thickening', 'Pneumonia', 'Pneumothorax']
+
+        if self.protected_category_mode not in self.protected_category_modes:
+            raise ValueError()
+
+        if self.prediction_mode not in self.TASKS_NIH:
+            raise ValueError()
+        
+        self.prompt = f"Task: Does this patient have {self.prediction_mode}? Answer yes or no\n Answer:"
         
         self.annotations = self.get_annotations(self.input_folder)
     
@@ -64,11 +69,11 @@ class NIHCXR(BaseDataset):
 
         test_items = list(split_items["Image Index"])
 
-        labels = None #???
+        labels = list(split_items[self.prediction_mode])
 
-        prompts = None #???
+        prompts = [self.prompt] * len(test_images)
 
-        protected_category = list(split_items[self.mode])
+        protected_category = list(split_items[self.protected_category_mode])
 
         test_images = [os.path.join(self.input_folder, "images", x)  for x in test_items]
 
