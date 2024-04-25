@@ -13,7 +13,9 @@ class NIHCXR(BaseDataset):
     def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
         super().__init__(input_folder, output_folder)
 
-        self.prediction_mode, self.protected_category_mode = mode.split()
+        self.mode = mode
+
+        self.prediction_mode, self.protected_category_mode = self.mode.split("_")
 
         self.protected_category_modes = ["age", "gender"]
 
