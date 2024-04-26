@@ -54,6 +54,8 @@ class VisoGender(BaseDataset):
         
         self.annotations["path"] = self.annotations["url"].map(url_to_path_dict)
 
+        self.annotations = self.annotations[~self.annotations.path.isna()]
+
         self.prompt = "Task: Select the description of the image from the multiple choice list provided:\n"
 
     def download_image_data(self, input_folder: str, urls: List[str]):
