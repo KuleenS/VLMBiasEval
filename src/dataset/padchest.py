@@ -54,7 +54,6 @@ class PadChest(BaseDataset):
         elif 18 <= x < 40: return "Young"
         elif 40 <= x < 60: return "Middle-Aged"
         elif 60 <= x: return "Senior"
-        else: return 0
     
     def get_annotations(self, input_folder): 
         df = pd.read_csv(os.path.join(input_folder, "PADCHEST_chest_x_ray_images_labels_160K_01.02.19.csv"))
