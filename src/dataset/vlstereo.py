@@ -12,6 +12,7 @@ import pandas as pd
 
 from tqdm import tqdm 
 from src.dataset.base_dataset import BaseDataset
+
 class VLStereo(BaseDataset):
 
     def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
@@ -29,7 +30,7 @@ class VLStereo(BaseDataset):
         if not os.path.exists(os.path.join(self.input_folder, "images")):
             url_to_path_dict = self.download_image_data(self.input_folder, list(self.annotations["Imaeg URL"]))
         else:
-            with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "wb") as f:
+            with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "rb") as f:
                 url_to_path_dict = pickle.load(f)
         
         self.annotations["path"] = self.annotations["Imaeg URL"].map(url_to_path_dict)
@@ -85,7 +86,7 @@ class VLStereo(BaseDataset):
 
             protected_category = row.target
 
-            prompt = f"A. {row.stereotype}\nB. {getattr(row, "anti-stereotype")}\nC. {row.unrelated}"
+            prompt = f"A. {row.stereotype}\nB. {getattr(row, 'anti-stereotype')}\nC. {row.unrelated}"
 
             list_of_tuples.append([prompt, path, prompt_label, protected_category])
 
