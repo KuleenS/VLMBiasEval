@@ -47,8 +47,7 @@ class MIMIC(BaseDataset):
         elif 0 <= x < 18: return "Child"
         elif 18 <= x < 40: return "Young"
         elif 40 <= x < 60: return "Middle-Aged"
-        elif 60 <= x < 80: return "Senior"
-        else: return 0
+        elif 60 <= x: return "Senior"
     
     def get_annotations(self, input_folder):
         patients = pd.read_csv(os.path.join(input_folder, "mimiciv", "hosp", "patients.csv.gz"))
