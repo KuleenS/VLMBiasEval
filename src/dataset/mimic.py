@@ -2,8 +2,6 @@ import os
 
 import json
 
-from typing import List
-
 import pandas as pd
 
 from src.dataset.base_dataset import BaseDataset

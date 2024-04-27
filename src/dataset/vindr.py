@@ -2,12 +2,6 @@ import os
 
 import json
 
-from typing import List
-
-import requests
-
-import pickle
-
 import pandas as pd
 
 import pydicom
