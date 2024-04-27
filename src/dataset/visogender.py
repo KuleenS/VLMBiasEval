@@ -49,7 +49,7 @@ class VisoGender(BaseDataset):
         if not os.path.exists(os.path.join(self.input_folder, "images")):
             url_to_path_dict = self.download_image_data(self.input_folder, list(self.annotations["url"]))
         else:
-            with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "wb") as f:
+            with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "rb") as f:
                 url_to_path_dict = pickle.load(f)
         
         self.annotations["path"] = self.annotations["url"].map(url_to_path_dict)
