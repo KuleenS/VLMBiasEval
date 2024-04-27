@@ -48,8 +48,6 @@ class PadChest(BaseDataset):
 
         self.annotations = self.get_annotations(self.input_folder)
 
-        self.annotations = self.annotations[self.annotations.exists == True]
-    
     def bin_age(self, x):
         if pd.isnull(x): return None
         elif 0 <= x < 18: return "Child"
