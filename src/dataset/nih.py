@@ -79,8 +79,6 @@ class NIHCXR(BaseDataset):
 
         test_images = [os.path.join(self.input_folder, "images", x)  for x in test_items]
 
-        prompts = [self.prompt]*len(test_images)
-
         list_of_tuples = list(zip(prompts, test_images, labels, protected_category))
 
         keys = ["prompt", "image", "label", "protected_category"]
