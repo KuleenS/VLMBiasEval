@@ -33,11 +33,11 @@ class UTKFace(ABC):
         self.protected_category_mode = self.mode.split("_")[1]
 
         if self.predicting_mode == "race":
-            self.prompt = "Task: Label the race of the person in the picture. Answer only White, Black, Asian, Indian, or Others\n Answer: "
+            self.prompt = "What is the race of the person in the picture?\nA. White\nB. Black\nC. Asian\nD. Indian\nE. Others\nAnswer with the option's letter from the given choices directly."
         elif self.predicting_mode == "age":
-            self.prompt = "Task: Label the age of the person in the picture. Answer only with Child if they are younger than 20, Young if they are 20 to 40 years old, Middle-Aged if they are 40 to 60 years old, Senior if they are over 60 years old.  \n Answer: "
+            self.prompt = "What is the age of the person in the picture?\nA. Child\nB. Young\nC. Middle-Aged\nD. Senior\nAnswer with the option's letter from the given choices directly."
         elif self.predicting_mode == "gender":
-            self.prompt = "Task: Label the gender of the person in the picture. Answer only Male or Female\n Answer: "
+            self.prompt = "What is the gender of the person in the picture?\nA. Male\nB. Female\nAnswer with the option's letter from the given choices directly."
 
         self.train_images, self.test_eval_images = train_test_split(self.files, test_size=0.2, random_state=0)
 
