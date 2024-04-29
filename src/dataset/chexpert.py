@@ -6,7 +6,7 @@ import pandas as pd
 
 from pathlib import Path
 
-from dataset.base_dataset import BaseDataset
+from src.dataset.base_dataset import BaseDataset
 
 class CheXpert(BaseDataset):
 

@@ -6,7 +6,7 @@ import pandas as pd
 
 import numpy as np
 
-from dataset.base_dataset import BaseDataset
+from src.dataset.base_dataset import BaseDataset
 
 class NIHCXR(BaseDataset):
 
