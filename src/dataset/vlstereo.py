@@ -88,7 +88,7 @@ class VLStereo(BaseDataset):
 
             protected_category = row.target
 
-            prompt = self.question + f"A. {row.stereotype}\nB. {getattr(row, 'anti-stereotype')}\nC. {row.unrelated}\n" + self.prompt
+            prompt = self.question + f"A. {row.stereotype}\nB. {getattr(row, '_5')}\nC. {row.unrelated}\n" + self.prompt
 
             list_of_tuples.append([prompt, path, prompt_label, protected_category])
 
