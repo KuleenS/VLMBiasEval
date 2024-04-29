@@ -10,7 +10,9 @@ from LLaVA.llava.model.builder import load_pretrained_model
 from LLaVA.llava.utils import disable_torch_init
 from LLaVA.llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 
+import PIL
 from PIL import Image
+
 import math
 
 def split_list(lst, n):
@@ -52,7 +54,12 @@ def eval_model(args):
 
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
-        image = Image.open(image_file).convert('RGB')
+        try:
+            with Image.open(image_file) as img:
+                image = img.convert('RGB')
+        except PIL.UnidentifiedImageError:
+            continue
+        
         image_tensor = process_images([image], image_processor, model.config)[0]
 
         with torch.inference_mode():
