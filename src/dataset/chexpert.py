@@ -15,7 +15,7 @@ class CheXpert(BaseDataset):
 
         self.mode = mode
 
-        self.prediction_mode, self.protected_category_mode = self.mode.split("_")
+        self.protected_category_mode, self.prediction_mode = self.mode.split("_")
 
         self.protected_category_modes = ["age", "sex", "ethnicity"]
 
@@ -60,7 +60,7 @@ class CheXpert(BaseDataset):
 
         df['subject_id'] = df['Path'].apply(lambda x: int(Path(x).parent.parent.name[7:])).astype(str)
 
-        details = pd.read_csv(os.path.join(input_folder, 'CHEXPERT DEMO.xlsx'))[['PATIENT', 'GENDER', 'AGE_AT_CXR', 'PRIMARY_RACE']]
+        details = pd.read_csv(os.path.join(input_folder, 'chexpert_demo.csv'))[['PATIENT', 'GENDER', 'AGE_AT_CXR', 'PRIMARY_RACE']]
 
         details['subject_id'] = details['PATIENT'].apply(lambda x: x[7:]).astype(int).astype(str)
 
@@ -84,15 +84,13 @@ class CheXpert(BaseDataset):
 
         split_items = self.annotations[self.annotations.split == split]
 
-        test_items = list(split_items["Image Index"])
+        test_images = list(split_items["filename"])
 
         labels = list(split_items[self.prediction_mode])
 
         prompts = [self.prompt] * len(test_images)
 
         protected_category = list(split_items[self.protected_category_mode])
-
-        test_images = [os.path.join(self.input_folder, "images", x)  for x in test_items]
 
         list_of_tuples = list(zip(prompts, test_images, labels, protected_category))
 
@@ -108,21 +106,21 @@ class CheXpert(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=2)
         
-        with open(os.path.join(self.output_folder, f"zeroshot_chexpert_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_chexpert_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=0)
         
-        with open(os.path.join(self.output_folder, f"train_chexpert_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"train_chexpert_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split=1)
         
-        with open(os.path.join(self.output_folder, f"test_chexpert_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_chexpert_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split=2)
         
-        with open(os.path.join(self.output_folder, f"test_chexpert_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_chexpert_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
