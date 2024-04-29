@@ -1,6 +1,6 @@
 import argparse
 
-import tomllib
+import toml
 
 from typing import Dict
 
@@ -26,15 +26,15 @@ def generate_zeroshot_dataset(dataset_name: str, input_folder: str, output_folde
     dataset.create_zero_shot_dataset()
 
 def main(args):
-    with open(args.config, "rb") as f:
-        data = tomllib.load(f)
+    with open(args.config, "r") as f:
+        data = toml.load(f)
 
     datasets_to_generate = data["datasets"]
 
     output_folder = data["output_folder"]
     
     for dataset_name in datasets_to_generate:
-        modes = data[dataset_name]["mode"]
+        modes = data[dataset_name]["modes"]
 
         for mode in modes:
             generate_zeroshot_dataset(dataset_name, data[dataset_name]["input_folder"], output_folder, mode)
