@@ -50,10 +50,10 @@ class VINDR(BaseDataset):
 
         test_df = pd.read_csv(os.path.join(input_folder, "annotations", "image_labels_test.csv"))
 
-        train_df['filename'] = train_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'train', x+'.dicom'))
+        train_df['filename'] = train_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'train', x+'.png'))
         train_df['split'] = 0
         # test data no rad_id, only ground truth
-        test_df['filename'] = test_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'test', x+'.dicom'))
+        test_df['filename'] = test_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'test', x+'.png'))
         test_df = test_df.rename(columns={'Other disease': 'Other diseases'})
         test_df['split'] = 1
 
