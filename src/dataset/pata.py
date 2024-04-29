@@ -26,7 +26,9 @@ class PATA(BaseDataset):
 
         self.mode = mode
 
-        self.prompt = "Task: Select the description of the image from the multiple choice list provided:\n"
+        self.question = "Which one is the correct caption of this image?\n"
+
+        self.prompt = "Answer with the option's letter from the given choices directly."
 
         self.replacements = {"doctor": "helping a patient", "pilot": "flying a plane", "soldier": "being a soldier", "singer": "singing", "photographer": "taking a picture"}
 
@@ -140,7 +142,7 @@ class PATA(BaseDataset):
 
             if len(prompt_options) != 0:
 
-                prompt = self.prompt + prompt_options
+                prompt = self.question + prompt_options + "\n" + self.prompt
 
                 path = row.path
 
