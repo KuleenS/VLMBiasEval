@@ -12,7 +12,7 @@ class PadChest(BaseDataset):
 
         self.mode = mode
 
-        self.prediction_mode, self.protected_category_mode = self.mode.split("_")
+        self.protected_category_mode, self.prediction_mode = self.mode.split("_")
 
         self.protected_category_modes = ["sex", "age"]
 
@@ -36,7 +36,7 @@ class PadChest(BaseDataset):
                  'suboptimal study', 'superior mediastinal enlargement', 'supra aortic elongation', 'suture material',
                  'tracheal shift', 'tracheostomy tube', 'tuberculosis sequelae', 'unchanged',
                  'vascular hilar enlargement', 'vascular redistribution', 'vertebral anterior compression',
-                 'vertebral compression', 'vertebral degenerative changes', 'vertebral fracture', 'volume loss'],
+                 'vertebral compression', 'vertebral degenerative changes', 'vertebral fracture', 'volume loss']
         
         if self.protected_category_mode not in self.protected_category_modes:
             raise ValueError()
@@ -138,17 +138,17 @@ class PadChest(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
         
-        with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=0)
         
-        with open(os.path.join(self.output_folder, f"train_padchest_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"train_padchest_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split=1)
         
-        with open(os.path.join(self.output_folder, f"test_padchest_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_padchest_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
