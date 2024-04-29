@@ -25,10 +25,10 @@ class CelebA(BaseDataset):
         self.splits = pd.read_csv(os.path.join(self.input_folder, "Eval", "list_eval_partition.txt"), sep=" ", header=None, names=["image", "split"])
 
         if self.mode == "blond_hair":
-            self.prompt = "Task: Answer whether the person in the photo has blond hair. Answer only yes or no\n Answer: "
+            self.prompt = "Does the person in the photo have blond hair? Answer the question using a single word or phrase."
         
         else:
-            self.prompt = "Task: Answer whether the person in the photo has heavy makeup. Answer only yes or no\n Answer: "
+            self.prompt = "Does the person in the photo have heavy makeup? Answer the question using a single word or phrase."
 
     
     def get_annotation(self, input_file):
