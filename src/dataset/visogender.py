@@ -56,7 +56,10 @@ class VisoGender(BaseDataset):
 
         self.annotations = self.annotations[~self.annotations.path.isna()]
 
-        self.prompt = "Task: Select the description of the image from the multiple choice list provided:\n"
+        self.question = "Which one is the correct caption of this image?\n"
+
+        self.prompt = "Answer with the option's letter from the given choices directly."
+
 
     def download_image_data(self, input_folder: str, urls: List[str]):
         image_paths = []
@@ -337,7 +340,7 @@ class VisoGender(BaseDataset):
 
         image = list(self.annotations["path"])
 
-        prompt = [self.prompt + x for x in list(self.annotations["prompt"])]
+        prompt = [self.question + x + "\n" + self.prompt for x in list(self.annotations["prompt"])]
 
         sector = list(self.annotations["path"])
 
