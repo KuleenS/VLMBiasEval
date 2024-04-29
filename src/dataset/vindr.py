@@ -16,7 +16,7 @@ class VINDR(BaseDataset):
 
         self.mode = mode
 
-        self.prediction_mode, self.protected_category_mode = self.mode.split("_")
+        self.protected_category_mode, self.prediction_mode = self.mode.split("_")
 
         self.protected_category_modes = ["sex", "age"]
 
@@ -50,10 +50,12 @@ class VINDR(BaseDataset):
 
         test_df = pd.read_csv(os.path.join(input_folder, "annotations", "image_labels_test.csv"))
 
-        train_df['filename'] = train_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'train', x+'.png'))
+        train_df['filename'] = train_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'train', x+'.dicom'))
+        train_df['filename_png'] = train_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'train', x+'.png'))
         train_df['split'] = 0
         # test data no rad_id, only ground truth
-        test_df['filename'] = test_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'test', x+'.png'))
+        test_df['filename'] = test_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'test', x+'.dicom'))
+        test_df['filename_png'] = test_df['image_id'].astype(str).apply(lambda x: os.path.join(input_folder, 'test', x+'.png'))
         test_df = test_df.rename(columns={'Other disease': 'Other diseases'})
         test_df['split'] = 1
 
@@ -81,7 +83,7 @@ class VINDR(BaseDataset):
 
         split_items = self.annotations[self.annotations.split == split]
 
-        test_images = list(split_items["filename"])
+        test_images = list(split_items["filename_png"])
 
         labels = list(split_items[self.prediction_mode])
 
@@ -103,17 +105,17 @@ class VINDR(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=1)
         
-        with open(os.path.join(self.output_folder, f"zeroshot_vindr_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_vindr_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=0)
         
-        with open(os.path.join(self.output_folder, f"train_vindr_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"train_vindr_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split=1)
         
-        with open(os.path.join(self.output_folder, f"test_vindr_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_vindr_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
