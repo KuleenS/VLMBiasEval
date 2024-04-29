@@ -174,7 +174,7 @@ class VisoGender(BaseDataset):
             
         return op_idx_metadata_dict, oo_idx_metadata_dict
     
-    def occupation_template_sentences_all_pronouns(occupation: str, template_sentence:str, other_participant:str=None, other_object:str=None, model_domain: str="ClIP", context_op:bool=False)-> tuple:
+    def occupation_template_sentences_all_pronouns(self, occupation: str, template_sentence:str, other_participant:str=None, other_object:str=None, model_domain: str="CLIP", context_op:bool=False)-> tuple:
         """
         Creates three sentences, based off either an occupation (if CLIP: and participant), or occupation If CLIP:and object)
         
@@ -224,7 +224,7 @@ class VisoGender(BaseDataset):
     
         return male_sentence, female_sentence, neutral_sentence
 
-    def participant_template_sentences_all_pronouns(other_participant:str, template_sentence:str)-> tuple:
+    def participant_template_sentences_all_pronouns(self, other_participant:str, template_sentence:str)-> tuple:
         """
         Creates three sentences, with the template reversed - only the participant - occupation is considered in this case
         If CLIP: "A $PARTICIPANT and $PRONOUN $OCCUPATION"
@@ -300,19 +300,19 @@ class VisoGender(BaseDataset):
                         if template_type == "occ_first":
                             sentence_template = template_occ_first
                             male_sent, female_sent, neutral_sent = self.occupation_template_sentences_all_pronouns(
-                                occupation, sentence_template, other_participant, other_obj, model_domain="CLIP", context_op=context_OP)
+                                occupation=occupation, template_sentence=sentence_template, other_participant=other_participant, other_object=other_obj, context_op=context_OP)
                         
                         elif template_type == "par_first":
                             sentence_template = template_par_first
                             male_sent, female_sent, neutral_sent = self.occupation_template_sentences_all_pronouns(
-                                occupation, sentence_template, other_participant, other_obj, model_domain="CLIP", context_op=context_OP)
+                                occupation=occupation, template_sentence=sentence_template, other_participant=other_participant, other_object=other_obj, context_op=context_OP)
                     
                     else:
                         other_obj = IDX_dict[metadata_key]["obj"]
                         if template_type == "occ_first":
                             sentence_template = template_sentence_obj
                             male_sent, female_sent, neutral_sent = self.occupation_template_sentences_all_pronouns(
-                                occupation, sentence_template, other_participant, other_obj, model_domain="CLIP", context_op=context_OP)
+                                occupation=occupation, template_sentence=sentence_template, other_participant=other_participant, other_object=other_obj, context_op=context_OP)
                             
                         elif template_type == "par_first":
                             continue
@@ -340,7 +340,7 @@ class VisoGender(BaseDataset):
 
         image = list(self.annotations["path"])
 
-        prompt = [self.question + x + "\n" + self.prompt for x in list(self.annotations["prompt"])]
+        prompt = [self.question + x + "\n" + self.prompt for x in list(self.annotations["options"])]
 
         sector = list(self.annotations["path"])
 
@@ -349,14 +349,12 @@ class VisoGender(BaseDataset):
         if self.mode:
             other_gender = list(self.annotations["other_gender"])
 
-            keys = ["prompt", "image", "label", "metadata", "sector", "specialisation", "other_gender"]
+            keys = ["prompt", "image", "label", "sector", "specialisation", "other_gender"]
 
             list_of_tuples = list(zip(prompt, image, label, sector, specialisation, other_gender))
 
         else:
-            metadata = self.annotations[["sector", "specialisation"]].values
-
-            keys = ["prompt", "image", "label", "metadata", "sector", "specialisation"]
+            keys = ["prompt", "image", "label", "sector", "specialisation"]
 
             list_of_tuples = list(zip(prompt, image, label, sector, specialisation))
 
@@ -370,7 +368,7 @@ class VisoGender(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
         
-        with open(os.path.join(self.output_folder, f"zeroshot_visogender_{self.text_mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_visogender_{self.text_mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
     
     def create_finetuning_dataset(self) -> None:
