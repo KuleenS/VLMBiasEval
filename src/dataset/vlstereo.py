@@ -51,9 +51,9 @@ class VLStereo(BaseDataset):
             image_path = os.path.join(input_folder, "images", f"{i}.jpg")
 
             try:
-                r = requests.get(image_url, timeout=15) # 10 seconds
-                with open(image_path, 'wb') as f:
-                    f.write(r.content)
+                with requests.get(image_url, timeout=15) as r:
+                    with open(image_path, 'wb') as f:
+                        f.write(r.content)
                 image_paths.append((image_url, image_path))
             except requests.exceptions.Timeout:
                 print("Timed out")
@@ -104,7 +104,7 @@ class VLStereo(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
         
-        with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
