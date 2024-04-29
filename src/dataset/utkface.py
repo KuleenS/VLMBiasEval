@@ -10,7 +10,9 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 
-class UTKFace(ABC):
+from src.dataset.base_dataset import BaseDataset
+
+class UTKFace(BaseDataset):
 
     def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
         super().__init__(input_folder, output_folder)
@@ -22,7 +24,7 @@ class UTKFace(ABC):
     
         self.mode = mode
 
-        self.files = self.grab_pictures()
+        self.files = self.grab_pictures(self.input_folder)
 
         self.data = self.prepare_metadata(self.files)
 
@@ -100,21 +102,21 @@ class UTKFace(ABC):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split="test")
         
-        with open(os.path.join(self.output_folder, f"zeroshot_utkface_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_utkface_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split="train")
         
-        with open(os.path.join(self.output_folder, f"train_utkface_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"train_utkface_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split="eval")
         
-        with open(os.path.join(self.output_folder, f"eval_utkface_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"eval_utkface_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split="test")
         
-        with open(os.path.join(self.output_folder, f"test_utkface_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_utkface_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
