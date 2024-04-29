@@ -162,7 +162,7 @@ class PATA(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
         
-        with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
