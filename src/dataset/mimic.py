@@ -13,7 +13,7 @@ class MIMIC(BaseDataset):
 
         self.mode = mode
 
-        self.prediction_mode, self.protected_category_mode = self.mode.split("_")
+        self.protected_category_mode, self.prediction_mode = self.mode.split("_")
 
         self.protected_category_modes = ["age", "gender", "ethnicity"]
 
@@ -109,23 +109,23 @@ class MIMIC(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split="test")
         
-        with open(os.path.join(self.output_folder, f"zeroshot_mimic_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_mimic_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split="train")
         
-        with open(os.path.join(self.output_folder, f"train_mimic_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"train_mimic_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
         
         list_of_dict = self.generate_dataset_dict(split="validate")
         
-        with open(os.path.join(self.output_folder, f"eval_mimic_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"eval_mimic_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split="test")
         
-        with open(os.path.join(self.output_folder, f"test_mimic_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_mimic_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
        
