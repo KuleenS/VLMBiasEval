@@ -69,7 +69,7 @@ class CelebA(BaseDataset):
         elif self.mode == "heavy_makeup":
             labels = list(labels_protected_category["Heavy_Makeup"].map({1 : "Yes", -1: "No"}))
 
-        test_images = [os.path.join(self.input_path, "Img", "img_align_celeba", x)  for x in test_items]
+        test_images = [os.path.join(self.input_folder, "Img", "img_align_celeba", x)  for x in test_items]
 
         prompts = [self.prompt]*len(test_images)
 
@@ -87,22 +87,22 @@ class CelebA(BaseDataset):
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=2)
         
-        with open(os.path.join(self.output_folder, f"zeroshot_celeba_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_celeba_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=0)
         
-        with open(os.path.join(self.output_folder, f"train_celeba_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"train_celeba_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split=1)
         
-        with open(os.path.join(self.output_folder, f"eval_celeba_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"eval_celeba_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
 
         list_of_dict = self.generate_dataset_dict(split=2)
         
-        with open(os.path.join(self.output_folder, f"test_celeba_{self.mode}.json")) as f:
+        with open(os.path.join(self.output_folder, f"test_celeba_{self.mode}.json"), "w") as f:
             json.dump(list_of_dict, f)
