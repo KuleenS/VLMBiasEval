@@ -32,7 +32,7 @@ def eval_model(args):
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
     with open(args.question_file, "r") as f:
-        questions = json.load(f)
+        questions = json.loads(f.read())
 
     model_outputs = []
 
@@ -70,13 +70,13 @@ def eval_model(args):
 
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
 
-        questions["prompt"] = cur_prompt
+        line["prompt"] = cur_prompt
 
-        questions["model_id"] = model_name
+        line["model_id"] = model_name
 
-        questions["output"] = outputs
+        line["output"] = outputs
 
-        model_outputs.append(questions)
+        model_outputs.append(line)
 
     with open(args.answers_file, "w") as f:
         json.dump(model_outputs, f)
@@ -85,7 +85,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--model-base", type=str, default=None)
-    parser.add_argument("--image-folder", type=str, default="")
     parser.add_argument("--question-file", type=str, default="tables/question.jsonl")
     parser.add_argument("--answers-file", type=str, default="answer.jsonl")
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
