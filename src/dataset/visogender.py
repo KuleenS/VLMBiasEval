@@ -46,10 +46,10 @@ class VisoGender(BaseDataset):
 
         self.annotations = self.generate_annotations(self.mode)
 
-        if not os.path.exists(os.path.join(self.input_folder, "images")):
+        if not os.path.exists(os.path.join(self.input_folder, "images", self.text_mode)):
             url_to_path_dict = self.download_image_data(self.input_folder, list(self.annotations["url"]))
         else:
-            with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "rb") as f:
+            with open(os.path.join(self.input_folder, f"url_to_path_map_{self.text_mode}.pickle"), "rb") as f:
                 url_to_path_dict = pickle.load(f)
         
         self.annotations["path"] = self.annotations["url"].map(url_to_path_dict)
@@ -64,11 +64,11 @@ class VisoGender(BaseDataset):
     def download_image_data(self, input_folder: str, urls: List[str]):
         image_paths = []
 
-        os.makedirs(os.path.join(input_folder, "images"), exist_ok=True)
+        os.makedirs(os.path.join(input_folder, "images", self.text_mode), exist_ok=True)
 
         for i, image_url in tqdm(enumerate(urls)):
 
-            image_path = os.path.join(input_folder, "images", f"{i}.jpg")
+            image_path = os.path.join(input_folder, "images", self.text_mode, f"{i}.jpg")
 
             try:
                 r = requests.get(image_url, timeout=15) # 10 seconds
@@ -90,7 +90,7 @@ class VisoGender(BaseDataset):
         
         url_to_path_dict = dict(image_paths)
 
-        with open(os.path.join(input_folder, "url_to_path_map.pickle"), "wb") as f:
+        with open(os.path.join(input_folder, f"url_to_path_map_{self.text_mode}.pickle"), "wb") as f:
             pickle.dump(url_to_path_dict, f)
         
         return url_to_path_dict
