@@ -58,7 +58,7 @@ class NIHCXR(BaseDataset):
 
         df["gender"] = df["Patient Gender"]
 
-        conditions = [df["Image Index"].isin(train_images), df["Image Index"].isin(train_images)]
+        conditions = [df["Image Index"].isin(train_images), ~df["Image Index"].isin(train_images)]
 
         df['split'] = np.select(conditions, [1, 2])
 
