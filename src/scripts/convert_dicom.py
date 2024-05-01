@@ -25,6 +25,9 @@ def main(args):
             except ValueError as e:
                 print(e)
                 print(image)
+            except AttributeError as e:
+                print(e)
+                print(image)
 
             if n % 50 == 0:
                 print('{} image converted'.format(n))
