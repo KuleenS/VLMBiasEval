@@ -56,7 +56,7 @@ class UTKFaceEval(BaseEvaluateDataset):
         for i, name in enumerate(label_map.keys()):
 
             result[f"prec-{name}"] = precision[i]
-            result[f"recall-{name}"] = precision[i]
-            result[f"f1-{name}"] = precision[i]
+            result[f"recall-{name}"] = recall[i]
+            result[f"f1-{name}"] = f1[i]
 
         return result
