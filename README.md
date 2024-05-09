@@ -33,7 +33,7 @@ pip install -r requirements.txt
    - **Original Article**: [VLStereoSet](https://aclanthology.org/2022.aacl-main.40.pdf)
 
 3. **Chest X-Rays Datasets**
-   - **Included Datasets**: MIMIC-CXR, CheXpert, NIH, PadChest, VinDr.
+   - **Included Datasets**: MIMIC-CXR(MIMIC), CheXpert, NIH, PadChest, VinDr.
    - **Task**: Zero-Shot Diagnosis. Given a chest X-ray and a prompt, predict findings. Protected attributes may include age, demographic, income, etc.
    - **Original Article**: [Chest X-Rays](https://arxiv.org/ftp/arxiv/papers/2402/2402.14815.pdf)
 
@@ -49,11 +49,11 @@ pip install -r requirements.txt
 6. **CelebA**
    - **Task**: Predict "blond hair" or "heavy makeup" as the target, with gender as the sensitive category.
    - **Original Article**: [CelebA](https://arxiv.org/pdf/1411.7766.pdf), [Gender Parity in CelebA](https://arxiv.org/pdf/2206.10843.pdf)
-
+%%%
 7. **FairFace**
    - **Task**: Fair and balanced facial dataset for various demographics.
    - **Original Article**: [FairFace](https://arxiv.org/pdf/1908.04913.pdf)
-
+%%%
 ## Evaluation
 Evaluate the models based on:
 - Performance metrics: F1, Precision, Recall, Accuracy.
