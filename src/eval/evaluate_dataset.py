@@ -14,6 +14,9 @@ class BaseEvaluateDataset(ABC):
         super().__init__()
 
         self.label_map = {"yes": 1, "no": 0}
+
+    def evaluate(self, path: str) -> Dict[str, float]:
+        pass
     
     def evaluate_dataset_binary(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         result = dict()
