@@ -54,15 +54,6 @@ pip install -r requirements.txt
    - **Task**: Fair and balanced facial dataset for various demographics.
    - **Original Article**: [FairFace](https://arxiv.org/pdf/1908.04913.pdf)
 
-8. **Chicago Face Database**
-   - **Task**: Various tasks involving demographic studies with facial images.
-   - **Original Article**: [Chicago Face Database](https://www.wittenbrink.org/cfd/mcw2015.pdf)
-
-### Other Possible Datasets
-9. **MSCOCO-Bias**
-   - **Task**: Quantifying societal bias amplification in image captioning.
-   - **Original Article**: [MSCOCO-Bias](https://openaccess.thecvf.com/content/CVPR2022/papers/Hirota_Quantifying_Societal_Bias_Amplification_in_Image_Captioning_CVPR_2022_paper.pdf)
-
 ## Evaluation
 Evaluate the models based on:
 - Performance metrics: F1, Precision, Recall, Accuracy.
