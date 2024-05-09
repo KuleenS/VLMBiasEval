@@ -317,7 +317,7 @@ class VisoGender(BaseDataset):
                         elif template_type == "par_first":
                             continue
                         
-                    options = "\n".join(["A. " + male_sent, "B. " +  female_sent, "C. " +  neutral_sent])
+                    options = "\n".join(["A. " + male_sent, "B. " +  female_sent])
                     label = IDX_dict[metadata_key][template_type.split("_")[0] + "_gender"]
 
                     example = {"options": options, "label": label, "url": IDX_dict[metadata_key]["url"], "sector": IDX_dict[metadata_key]["sector"], "specialisation": IDX_dict[metadata_key]["specialisation"]}
