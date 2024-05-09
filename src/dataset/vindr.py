@@ -32,7 +32,7 @@ class VINDR(BaseDataset):
         if self.prediction_mode not in self.TASKS_VINDR:
             raise ValueError()
         
-        self.prompt = f"Task: Does this patient have {self.prediction_mode}? Answer yes or no\n Answer:"
+        self.prompt = f"Does this patient have {self.prediction_mode}? Answer the question using a single word or phrase."
 
         self.annotations = self.get_annotations(self.input_folder)
 
