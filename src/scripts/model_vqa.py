@@ -13,18 +13,10 @@ from LLaVA.llava.mm_utils import tokenizer_image_token, process_images, get_mode
 import PIL
 from PIL import Image
 
-import math
-
-def split_list(lst, n):
-    """Split a list into n (roughly) equal-sized chunks"""
-    chunk_size = math.ceil(len(lst) / n)  # integer division
-    return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
-
-
-def get_chunk(lst, n, k):
-    chunks = split_list(lst, n)
-    return chunks[k]
-
+def batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
 
 def eval_model(args):
     # Model
@@ -38,56 +30,85 @@ def eval_model(args):
     for question_file in question_files:
 
         with open(question_file, "r") as f:
-            questions = json.loads(f.read())
+            data = json.loads(f.read())
+        
+        output_labels = data["labels"]
+
+        questions = data["data"]
 
         model_outputs = []
 
-        for line in tqdm(questions):
-            image_file = line["image"]
-            qs = line["prompt"]
-            cur_prompt = qs
-            if model.config.mm_use_im_start_end:
-                qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
-            else:
-                qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+        questions_batched = batch(questions)
 
-            conv = conv_templates[args.conv_mode].copy()
-            conv.append_message(conv.roles[0], qs)
-            conv.append_message(conv.roles[1], None)
-            prompt = conv.get_prompt()
+        for batch in tqdm(questions_batched):
+            image_files = [x["image"] for x in batch]
+            qs = [x["prompt"] for x in batch]
+            cur_prompts = qs
+            
+            for i in range(len(qs)):
 
-            input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+                if model.config.mm_use_im_start_end:
+                    qs[i] = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs[i]
+                else:
+                    qs[i] = DEFAULT_IMAGE_TOKEN + '\n' + qs[i]
+            
+            prompts = []
 
-            try:
+            for i in range(len(qs)):
+
+                conv = conv_templates[args.conv_mode].copy()
+                conv.append_message(conv.roles[0], qs[i])
+                conv.append_message(conv.roles[1], None)
+                prompt = conv.get_prompt()
+
+                prompts.append(prompt)
+
+            input_ids = tokenizer_image_token(prompts, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').cuda()
+
+            images = []
+
+            for image_file in image_files:
                 with Image.open(image_file) as img:
                     image = img.convert('RGB')
-            except PIL.UnidentifiedImageError:
-                continue
+                    image.append(images)
             
-            image_tensor = process_images([image], image_processor, model.config)[0]
+            image_tensor = process_images(images, image_processor, model.config)
 
             with torch.inference_mode():
-                output_ids = model.generate(
+                output = model.generate(
                     input_ids,
-                    images=image_tensor.unsqueeze(0).half().cuda(),
+                    images=image_tensor.half().cuda(),
                     image_sizes=[image.size],
-                    do_sample=True if args.temperature > 0 else False,
+                    do_sample=False,
                     temperature=args.temperature,
                     top_p=args.top_p,
                     num_beams=args.num_beams,
                     # no_repeat_ngram_size=3,
-                    max_new_tokens=1024,
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    max_new_tokens=1,
                     use_cache=True)
+            
+            g = output['scores'][0]
 
-            outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+            preds = []
 
-            line["prompt"] = cur_prompt
+            for i in g:
+                pred_options_logits = torch.stack([i[tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
+                pred = pred_options_logits.argmax(dim=-1).item()
 
-            line["model_id"] = model_name
+                preds.append(pred)
+            
+            for cur_prompt, pred, line in zip(batch, cur_prompts, preds):
+                model_outputs.append(line)
+        
+                line["prompt"] = cur_prompt
 
-            line["output"] = outputs
+                line["model_id"] = model_name
 
-            model_outputs.append(line)
+                line["output"] = pred
+
+                model_outputs.append(line)
         
         model_name_clean = args.model_path.replace("/", "-")
         
@@ -103,7 +124,8 @@ if __name__ == "__main__":
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
-    parser.add_argument("--temperature", type=float, default=0.2)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
     args = parser.parse_args()
