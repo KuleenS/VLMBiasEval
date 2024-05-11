@@ -29,7 +29,8 @@ class CelebA(BaseDataset):
         
         else:
             self.prompt = "Does the person in the photo have heavy makeup? Answer the question using a single word or phrase."
-
+        
+        self.outputs = ["Yes", "No"]
     
     def get_annotation(self, input_file):
         with open(input_file, "r") as f:
@@ -86,9 +87,11 @@ class CelebA(BaseDataset):
     
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=2)
+
+        final_data = {"data": list_of_dict, "labels": self.outputs}
         
         with open(os.path.join(self.output_folder, f"zeroshot_celeba_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+            json.dump(final_data, f)
 
         
     def create_finetuning_dataset(self) -> None:

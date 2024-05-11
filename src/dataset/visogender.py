@@ -60,6 +60,7 @@ class VisoGender(BaseDataset):
 
         self.prompt = "Answer with the option's letter from the given choices directly."
 
+        self.outputs = ["A", "B"]
 
     def download_image_data(self, input_folder: str, urls: List[str]):
         image_paths = []
@@ -367,9 +368,11 @@ class VisoGender(BaseDataset):
     
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
+
+        final_data = {"data": list_of_dict, "labels": self.outputs}
         
         with open(os.path.join(self.output_folder, f"zeroshot_visogender_{self.text_mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+            json.dump(final_data, f)
     
     def create_finetuning_dataset(self) -> None:
         raise NotImplementedError()

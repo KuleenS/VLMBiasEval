@@ -48,6 +48,8 @@ class PadChest(BaseDataset):
 
         self.annotations = self.get_annotations(self.input_folder)
 
+        self.outputs = ["Yes", "No"]
+
     def bin_age(self, x):
         if pd.isnull(x): return None
         elif 0 <= x < 18: return "Child"
@@ -137,9 +139,11 @@ class PadChest(BaseDataset):
     
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
+
+        final_data = {"data": list_of_dict, "labels": self.outputs}
         
         with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+            json.dump(final_data, f)
         
     def create_finetuning_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict(split=0)

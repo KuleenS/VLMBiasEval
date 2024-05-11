@@ -45,6 +45,8 @@ class PATA(BaseDataset):
         self.annotations["path"] = self.annotations["url"].map(url_to_path_dict)
 
         self.annotations = self.annotations[~self.annotations.path.isna()]
+
+        self.outputs = ["A", "B", "C", "D", "E", "F", "G", "H"]
     
     def download_image_data(self, input_folder: str, urls: List[str]):
         image_paths = []
@@ -161,9 +163,11 @@ class PATA(BaseDataset):
     
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
+
+        final_data = {"data": list_of_dict, "labels": self.outputs}
         
         with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+            json.dump(final_data, f)
         
     def create_finetuning_dataset(self) -> None:
         raise NotImplementedError()

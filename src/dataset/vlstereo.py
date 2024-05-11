@@ -41,6 +41,8 @@ class VLStereo(BaseDataset):
 
         self.label_to_choice = {0: "A", 1: "B", 2: "C"}
 
+        self.outputs = ["A", "B", "C"]
+
     def download_image_data(self, input_folder: str, urls: List[str]):
         image_paths = []
 
@@ -103,9 +105,11 @@ class VLStereo(BaseDataset):
     
     def create_zero_shot_dataset(self) -> None:
         list_of_dict = self.generate_dataset_dict()
+
+        final_data = {"data": list_of_dict, "labels": self.outputs}
         
         with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+            json.dump(final_data, f)
         
     def create_finetuning_dataset(self) -> None:
         raise NotImplementedError()
