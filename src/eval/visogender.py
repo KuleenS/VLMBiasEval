@@ -40,6 +40,8 @@ class VisoGenderEval(BaseEvaluateDataset):
 
         df["correct"] = df["output"] == df["label_num"]
 
+        overall_accuracy = len(df[df["output"] == df["label_num"]])/len(df)
+
         overall_results = self.get_scores(df)
 
         df["same_gender"] = df["label"] == df["other_gender"]
@@ -60,6 +62,8 @@ class VisoGenderEval(BaseEvaluateDataset):
             same_gender_results[k+"_same_gender"] = same_gender[k]
 
             different_gender_results[k+"_different_gender"] = different_gender[k]
+        
+        total_results["overall"] = overall_accuracy
 
         return total_results
 
@@ -71,12 +75,16 @@ class VisoGenderEval(BaseEvaluateDataset):
 
         df["correct"] = df["output"] == df["label_num"]
 
+        overall_accuracy = len(df[df["output"] == df["label_num"]])/len(df)
+
         overall_results = self.get_scores(df)
 
         total_results = dict()
 
         for k,v in overall_results.items():
             total_results[k+"_overall"] = overall_results[k]
+        
+        total_results["overall"] = overall_accuracy
         
         return total_results
 
