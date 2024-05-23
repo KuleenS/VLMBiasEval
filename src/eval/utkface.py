@@ -12,11 +12,9 @@ class UTKFaceEval(BaseEvaluateDataset):
     def __init__(self) -> None:
         super().__init__()
 
-        self.output_map = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4}
-
         self.race_label = {"white": 0, "black": 1, "asian": 2, "indian": 3, "others": 4}
 
-        self.age_label = {"child": 0, "young": 1, "middle_aged": 2, "senior": 3}
+        self.age_label = {"child": 0, "young": 1, "middle-aged": 2, "senior": 3}
 
         self.gender_label = {"male": 0, "female": 1}
     
@@ -37,7 +35,7 @@ class UTKFaceEval(BaseEvaluateDataset):
              
         label = [label_map[x["label"].lower()] for x in data]
 
-        output = [self.output_map[x["output"].lower()] for x in data]
+        output = [x["output"] for x in data]
 
         result = dict()
 

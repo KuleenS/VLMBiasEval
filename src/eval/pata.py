@@ -4,12 +4,14 @@ from typing import Dict, List, Any
 
 from src.eval.evaluate_dataset import BaseEvaluateDataset
 
-class PadChestEval(BaseEvaluateDataset):
+class PATAEval(BaseEvaluateDataset):
 
     def __init__(self) -> None:
         super().__init__()
 
         self.label_map = {"yes": 1, "no": 0}
+
+        self.outputs = ["A", "B", "C", "D", "E", "F", "G", "H"]
     
     def evaluate(self, path: str) -> Dict[str, float]:
         with open(path) as f:
@@ -17,7 +19,7 @@ class PadChestEval(BaseEvaluateDataset):
 
         labels = [x["label"] for x in data]
 
-        outputs = [x["output"] for x in data]
+        outputs = [self.outputs[x["output"]] for x in data]
 
         true_outputs = [1 if output in label[0] else 0 for label, output in zip(labels, outputs)]
 

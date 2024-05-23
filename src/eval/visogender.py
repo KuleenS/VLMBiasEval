@@ -57,11 +57,12 @@ class VisoGenderEval(BaseEvaluateDataset):
         total_results = dict()
 
         for k,v in overall_results.items():
+            
             total_results[k+"_overall"] = overall_results[k]
 
-            same_gender_results[k+"_same_gender"] = same_gender[k]
+            total_results[k+"_same_gender"] = same_gender_results[k]
 
-            different_gender_results[k+"_different_gender"] = different_gender[k]
+            total_results[k+"_different_gender"] = different_gender_results[k]
         
         total_results["overall"] = overall_accuracy
 

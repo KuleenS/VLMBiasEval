@@ -10,6 +10,8 @@ class VinDREval(BaseEvaluateDataset):
         super().__init__()
 
         self.label_map = {"yes": 1, "no": 0}
+
+        self.outputs = ["Yes", "No"]
     
     def evaluate(self, path: str) -> Dict[str, float]:
         with open(path) as f:
@@ -20,6 +22,9 @@ class VinDREval(BaseEvaluateDataset):
         for i in range(len(data)):
 
             data[i]["label"] = label_map_inverse[data[i]["label"]]
+            data[i]["output"] = self.outputs[data[i]["output"]]
+        
+        data = [x for x in data if x["protected_category"] != ""]
 
         return super().evaluate_dataset_binary(data)
 

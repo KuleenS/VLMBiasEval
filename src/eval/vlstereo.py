@@ -11,6 +11,8 @@ class VLStereoEval(BaseEvaluateDataset):
     def __init__(self) -> None:
         super().__init__()
 
+        self.outputs = ["Yes", "No"]
+
     def evaluate(self, path) -> Dict[str, float]:
 
         with open(path) as f:
