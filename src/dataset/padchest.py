@@ -2,6 +2,8 @@ import os
 
 import json
 
+from typing import List
+
 import pandas as pd
 
 from src.dataset.base_dataset import BaseDataset
@@ -49,6 +51,8 @@ class PadChest(BaseDataset):
         self.annotations = self.get_annotations(self.input_folder)
 
         self.outputs = ["Yes", "No"]
+
+        self.clip_outputs = [f"{self.prediction_mode}", f"No {self.prediction_mode}"]
 
     def bin_age(self, x):
         if pd.isnull(x): return None
@@ -117,12 +121,12 @@ class PadChest(BaseDataset):
 
         return df_filtered
     
-    def generate_dataset_dict(self):
+    def generate_dataset_dict(self, prompt: str | List[str]):
         test_images = list(self.annotations["filename"])
 
         labels = list(self.annotations[self.prediction_mode])
 
-        prompts = [self.prompt] * len(test_images)
+        prompts = [prompt] * len(test_images)
 
         protected_category = list(self.annotations[self.protected_category_mode])
 
@@ -135,24 +139,20 @@ class PadChest(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict 
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict()
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
+
+        return final_data
+    
+    def create_llava_dataset(self):
+        final_data = self.generate_dataset_dict(self.prompt)
         
         with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_finetuning_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split=0)
-        
-        with open(os.path.join(self.output_folder, f"train_padchest_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs)
 
-        list_of_dict = self.generate_dataset_dict(split=1)
-        
-        with open(os.path.join(self.output_folder, f"test_padchest_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+        with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)
+
 

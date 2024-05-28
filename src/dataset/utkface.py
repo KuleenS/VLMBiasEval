@@ -1,5 +1,3 @@
-from abc import ABC
-
 import os
 
 import json
@@ -30,20 +28,21 @@ class UTKFace(BaseDataset):
 
         self.data["image"] = self.files
 
-        self.predicting_mode = self.mode.split("_")[0]
-
-        self.protected_category_mode = self.mode.split("_")[1]
+        self.predicting_mode, self.protected_category_mode = self.mode.split("_")
 
         if self.predicting_mode == "race":
             self.prompt = "What is the race of the person in the picture?\nA. White\nB. Black\nC. Asian\nD. Indian\nE. Others\nAnswer with the option's letter from the given choices directly."
             self.outputs = ["A", "B", "C", "D", "E"]
+            self.clip_outputs = ["white", "black", "asian", "indian", "others"]
         elif self.predicting_mode == "age":
             self.prompt = "What is the age of the person in the picture?\nA. Child\nB. Young\nC. Middle-Aged\nD. Senior\nAnswer with the option's letter from the given choices directly."
             self.outputs = ["A", "B", "C", "D"]
+            self.clip_outputs = ["child", "young", "middle-aged", "senior"]
 
         elif self.predicting_mode == "gender":
             self.prompt = "What is the gender of the person in the picture?\nA. Male\nB. Female\nAnswer with the option's letter from the given choices directly."
             self.outputs = ["A", "B"]
+            self.clip_outputs = ["male", "female"]
 
         self.train_images, self.test_eval_images = train_test_split(self.files, test_size=0.2, random_state=0)
 
@@ -76,13 +75,8 @@ class UTKFace(BaseDataset):
 
         return meta_data
 
-    def generate_dataset_dict(self, split: str):
-        if split == "train":
-            test_items = self.train_images
-        elif split == "eval":
-            test_items = self.eval_images
-        elif split == "test":
-            test_items = self.test_images
+    def generate_dataset_dict(self, prompt: str | List[str]):
+        test_items = self.test_images
 
         filtered_metadata = self.data[self.data.image.isin(test_items)]
 
@@ -90,7 +84,7 @@ class UTKFace(BaseDataset):
 
         labels = filtered_metadata[self.predicting_mode] 
 
-        prompts = [self.prompt]*len(test_items)
+        prompts = [prompt]*len(test_items)
 
         list_of_tuples = list(zip(prompts, test_items, labels, protected_category))
 
@@ -101,28 +95,18 @@ class UTKFace(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split="test")
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
+        
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt)
         
         with open(os.path.join(self.output_folder, f"zeroshot_utkface_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_finetuning_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split="train")
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"train_utkface_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
-
-        list_of_dict = self.generate_dataset_dict(split="eval")
-        
-        with open(os.path.join(self.output_folder, f"eval_utkface_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
-
-        list_of_dict = self.generate_dataset_dict(split="test")
-        
-        with open(os.path.join(self.output_folder, f"test_utkface_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+        with open(os.path.join(self.output_folder, f"zeroshot_utkface_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)

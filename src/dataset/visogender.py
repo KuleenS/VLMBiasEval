@@ -318,7 +318,8 @@ class VisoGender(BaseDataset):
                         elif template_type == "par_first":
                             continue
                         
-                    options = "\n".join(["A. " + male_sent, "B. " +  female_sent])
+                    options = [male_sent, female_sent]
+
                     label = IDX_dict[metadata_key][template_type.split("_")[0] + "_gender"]
 
                     example = {"options": options, "label": label, "url": IDX_dict[metadata_key]["url"], "sector": IDX_dict[metadata_key]["sector"], "specialisation": IDX_dict[metadata_key]["specialisation"]}
@@ -335,13 +336,16 @@ class VisoGender(BaseDataset):
                 
             return pd.DataFrame(outputs)
 
-    def generate_dataset_dict(self):
+    def generate_dataset_dict(self, model: str):
 
         label = list(self.annotations["label"])
 
         image = list(self.annotations["path"])
 
-        prompt = [self.question + x + "\n" + self.prompt for x in list(self.annotations["options"])]
+        if model == "clip":
+            prompt = [x for x in list(self.annotations["options"])]
+        else:
+            prompt = [self.question + "\n".join(["A. " + x[0], "B. " +  x[1]]) + "\n" + self.prompt for x in list(self.annotations["options"])]
 
         sector = list(self.annotations["path"])
 
@@ -364,15 +368,18 @@ class VisoGender(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict()
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
-        
+
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model="llava")
+
         with open(os.path.join(self.output_folder, f"zeroshot_visogender_{self.text_mode}.json"), "w") as f:
             json.dump(final_data, f)
     
-    def create_finetuning_dataset(self) -> None:
-        raise NotImplementedError()
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model="clip")
+
+        with open(os.path.join(self.output_folder, f"zeroshot_visogender_{self.text_mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)

@@ -2,6 +2,8 @@ import os
 
 import json
 
+from typing import List
+
 import pandas as pd
 
 from src.dataset.base_dataset import BaseDataset
@@ -32,6 +34,8 @@ class MIMIC(BaseDataset):
         self.annotations = self.get_annotations(self.input_folder)
 
         self.outputs = ["Yes", "No"]
+
+        self.clip_outputs = [f"{self.prediction_mode}", f"No {self.prediction_mode}"]
     
     def ethnicity_mapping(self,x):
         if pd.isnull(x):
@@ -85,15 +89,15 @@ class MIMIC(BaseDataset):
 
         return df
     
-    def generate_dataset_dict(self, split: str):
+    def generate_dataset_dict(self, prompt: str | List[str]):
 
-        split_items = self.annotations[self.annotations.split == split]
+        split_items = self.annotations[self.annotations.split == "test"]
 
         test_images = list(split_items["filename"])
 
         labels = list(split_items[self.prediction_mode])
 
-        prompts = [self.prompt] * len(test_images)
+        prompts = [prompt] * len(test_images)
 
         protected_category = list(split_items[self.protected_category_mode])
 
@@ -106,30 +110,20 @@ class MIMIC(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict 
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split="test")
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
+
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt)
         
         with open(os.path.join(self.output_folder, f"zeroshot_mimic_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_finetuning_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split="train")
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"train_mimic_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
-        
-        list_of_dict = self.generate_dataset_dict(split="validate")
-        
-        with open(os.path.join(self.output_folder, f"eval_mimic_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
-
-        list_of_dict = self.generate_dataset_dict(split="test")
-        
-        with open(os.path.join(self.output_folder, f"test_mimic_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+        with open(os.path.join(self.output_folder, f"zeroshot_mimic_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)
 
        

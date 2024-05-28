@@ -2,6 +2,8 @@ import os
 
 import json
 
+from typing import List
+
 import pandas as pd
 
 import pydicom
@@ -39,6 +41,8 @@ class VINDR(BaseDataset):
         self.annotations = self.annotations[self.annotations.exists == True]
 
         self.outputs = ["Yes", "No"]
+
+        self.clip_outputs = [f"{self.prediction_mode}", f"No {self.prediction_mode}"]
     
     def bin_age(self, x):
         if pd.isnull(x): return None
@@ -81,15 +85,15 @@ class VINDR(BaseDataset):
 
         return df
     
-    def generate_dataset_dict(self, split: int):
+    def generate_dataset_dict(self, prompt: str | List[str]):
 
-        split_items = self.annotations[self.annotations.split == split]
+        split_items = self.annotations[self.annotations.split == 1]
 
         test_images = list(split_items["filename_png"])
 
         labels = list(split_items[self.prediction_mode])
 
-        prompts = [self.prompt] * len(test_images)
+        prompts = [prompt] * len(test_images)
 
         protected_category = list(split_items[self.protected_category_mode])
 
@@ -102,24 +106,20 @@ class VINDR(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict 
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split=1)
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
-        
+
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt)
+
         with open(os.path.join(self.output_folder, f"zeroshot_vindr_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_finetuning_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split=0)
-        
-        with open(os.path.join(self.output_folder, f"train_vindr_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs)
 
-        list_of_dict = self.generate_dataset_dict(split=1)
-        
-        with open(os.path.join(self.output_folder, f"test_vindr_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+        with open(os.path.join(self.output_folder, f"zeroshot_vindr_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)
+
 

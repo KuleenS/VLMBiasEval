@@ -118,21 +118,13 @@ class PATA(BaseDataset):
 
                 options = list(zip(ascii_uppercase[:total_examples], positive_examples + negative_examples))
 
-                prompt_options = ""
-
-                action = added_action[scene["short"]]
-
-                for option in options:
-
-                    prompt_options += option[0] + ". " + option[1] + " "+ action + "\n"
-
-                prompts[scene["short"] + "_" + prompt_type] = prompt_options
+                prompts[scene["short"] + "_" + prompt_type] = options, added_action[scene["short"]]
 
                 prompt_labels[scene["short"] + "_" + prompt_type] = (ascii_uppercase[:len(positive_examples)], ascii_uppercase[len(positive_examples): total_examples])
             
         return prompts, prompt_labels
 
-    def generate_dataset_dict(self):
+    def generate_dataset_dict(self, model: str):
         list_of_tuples = []
 
         for row in self.annotations.itertuples(): 
@@ -140,11 +132,20 @@ class PATA(BaseDataset):
 
             prompt_label = self.prompt_labels[key] 
 
-            prompt_options = self.prompt_options[key]
+            options, action = self.prompt_options[key]
 
             if len(prompt_options) != 0:
 
-                prompt = self.question + prompt_options + "\n" + self.prompt
+                if model == "clip":
+                    prompt = [x[1] for x in options]
+                else:
+                    prompt_options = ""
+
+                    for option in options:
+
+                        prompt_options += option[0] + ". " + option[1] + " "+ action + "\n"
+
+                    prompt = self.question + prompt_options + "\n" + self.prompt
 
                 path = row.path
 
@@ -159,15 +160,19 @@ class PATA(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict()
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
-        
+
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model = "llava")
+
         with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_finetuning_dataset(self) -> None:
-        raise NotImplementedError()
+    def create_clip_dataset(self) -> None:
+
+        final_data = self.generate_dataset_dict(model = "clip")
+
+        with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)

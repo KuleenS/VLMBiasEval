@@ -77,7 +77,7 @@ class VLStereo(BaseDataset):
         
         return url_to_path_dict
     
-    def generate_dataset_dict(self):
+    def generate_dataset_dict(self, model: str):
         filtered_set = self.annotations[self.annotations.bias_type == self.mode]
 
         list_of_tuples = []
@@ -90,7 +90,11 @@ class VLStereo(BaseDataset):
 
             protected_category = row.target
 
-            prompt = self.question + f"A. {row.stereotype}\nB. {getattr(row, '_5')}\nC. {row.unrelated}\n" + self.prompt
+            if model == "clip":
+                prompt = [row.stereotype, getattr(row, '_5'), row.unrelated]
+            else:
+
+                prompt = self.question + f"A. {row.stereotype}\nB. {getattr(row, '_5')}\nC. {row.unrelated}\n" + self.prompt
 
             list_of_tuples.append([prompt, path, prompt_label, protected_category])
 
@@ -101,15 +105,18 @@ class VLStereo(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict()
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
+
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model="llava")
         
         with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_finetuning_dataset(self) -> None:
-        raise NotImplementedError()
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model="clip")
+        
+        with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)

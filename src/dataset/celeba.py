@@ -3,6 +3,8 @@ import os
 
 import json
 
+from typing import List
+
 import pandas as pd
 import numpy as np
 
@@ -31,7 +33,12 @@ class CelebA(BaseDataset):
             self.prompt = "Does the person in the photo have heavy makeup? Answer the question using a single word or phrase."
         
         self.outputs = ["Yes", "No"]
-    
+
+        if self.mode == "blond_hair":
+            self.clip_outputs = ["blond hair", "no blond hair"]
+        else:
+            self.clip_outputs = ["heavy makeup", "no heavy makeup"]
+
     def get_annotation(self, input_file):
         with open(input_file, "r") as f:
             texts = f.read().split("\n") 
@@ -58,8 +65,8 @@ class CelebA(BaseDataset):
                 df[nm] = pd.to_numeric(df[nm],downcast="integer")
         return df
     
-    def generate_dataset_dict(self, split: int):
-        test_items = list(self.splits[self.splits.split == split]["image"])
+    def generate_dataset_dict(self, prompt: str | List[str]):
+        test_items = list(self.splits[self.splits.split == 2]["image"])
 
         labels_protected_category = self.annotations[self.annotations.image_id.isin(test_items)]
 
@@ -72,7 +79,7 @@ class CelebA(BaseDataset):
 
         test_images = [os.path.join(self.input_folder, "Img", "img_align_celeba", x)  for x in test_items]
 
-        prompts = [self.prompt]*len(test_images)
+        prompts = [prompt]*len(test_images)
 
         list_of_tuples = list(zip(prompts, test_images, labels, protected_category))
 
@@ -83,29 +90,18 @@ class CelebA(BaseDataset):
             for values in list_of_tuples
         ]
 
-        return list_of_dict
-    
-    def create_zero_shot_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split=2)
-
         final_data = {"data": list_of_dict, "labels": self.outputs}
-        
+
+        return final_data
+    
+    def create_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt)
+
         with open(os.path.join(self.output_folder, f"zeroshot_celeba_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
+    def create_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs)
         
-    def create_finetuning_dataset(self) -> None:
-        list_of_dict = self.generate_dataset_dict(split=0)
-        
-        with open(os.path.join(self.output_folder, f"train_celeba_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
-
-        list_of_dict = self.generate_dataset_dict(split=1)
-        
-        with open(os.path.join(self.output_folder, f"eval_celeba_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
-
-        list_of_dict = self.generate_dataset_dict(split=2)
-        
-        with open(os.path.join(self.output_folder, f"test_celeba_{self.mode}.json"), "w") as f:
-            json.dump(list_of_dict, f)
+        with open(os.path.join(self.output_folder, f"zeroshot_celeba_{self.mode}_clip.json"), "w") as f:
+            json.dump(final_data, f)
