@@ -82,10 +82,6 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
-    parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--top_p", type=float, default=None)
-    parser.add_argument("--num_beams", type=int, default=1)
     args = parser.parse_args()
 
     eval_model(args)
