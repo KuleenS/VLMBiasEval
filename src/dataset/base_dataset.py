@@ -9,8 +9,8 @@ class BaseDataset(ABC):
 
         self.output_folder = output_folder
     
-    def create_zero_shot_dataset(self) -> None:
+    def create_llava_dataset(self) -> None:
         pass
         
-    def create_finetuning_dataset(self) -> None:
+    def create_clip_dataset(self) -> None:
         pass
