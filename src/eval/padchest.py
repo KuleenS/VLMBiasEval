@@ -20,10 +20,7 @@ class PadChestEval(BaseEvaluateDataset):
         label_map_inverse = {1 : "yes", 0: "no"}
 
         for i in range(len(data)):
-
             data[i]["label"] = label_map_inverse[data[i]["label"]]
-
-            data[i]["output"] = self.outputs[data[i]["output"]]
 
 
         return super().evaluate_dataset_binary(data)

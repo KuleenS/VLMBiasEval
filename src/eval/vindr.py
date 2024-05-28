@@ -20,9 +20,7 @@ class VinDREval(BaseEvaluateDataset):
         label_map_inverse = {1 : "yes", 0: "no"}
 
         for i in range(len(data)):
-
             data[i]["label"] = label_map_inverse[data[i]["label"]]
-            data[i]["output"] = self.outputs[data[i]["output"]]
         
         data = [x for x in data if x["protected_category"] != ""]
 

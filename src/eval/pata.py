@@ -19,7 +19,7 @@ class PATAEval(BaseEvaluateDataset):
 
         labels = [x["label"] for x in data]
 
-        outputs = [self.outputs[x["output"]] for x in data]
+        outputs = [x["output"] for x in data]
 
         true_outputs = [1 if output in label[0] else 0 for label, output in zip(labels, outputs)]
 

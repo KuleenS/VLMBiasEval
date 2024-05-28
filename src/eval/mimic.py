@@ -21,7 +21,6 @@ class MIMICEval(BaseEvaluateDataset):
         label_map_inverse = {1 : "yes", 0: "no"}
 
         for i in range(len(data)):
-            data[i]["output"] = self.outputs[data[i]["output"]]
             data[i]["label"] = label_map_inverse[data[i]["label"]]
 
         return super().evaluate_dataset_binary(data)
