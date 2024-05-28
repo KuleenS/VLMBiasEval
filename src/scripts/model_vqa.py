@@ -5,6 +5,7 @@ import json
 from tqdm import tqdm
 
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, AutoTokenizer
+from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 import PIL
 
@@ -18,15 +19,23 @@ def batch_iterable(iterable, n=1):
 def eval_model(args):
     model_name = args.model_path
 
-    processor = LlavaNextProcessor.from_pretrained(model_name)
-
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-    tokenizer.padding_side = "left"
 
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+    if model_name in ["microsoft/llava-med-v1.5-mistral-7b", "microsoft/llava-med-7b-delta"]:
+        processor = AutoProcessor.from_pretrained(model_name)
+
+        model = LlavaForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+
+    else:
+        processor = LlavaNextProcessor.from_pretrained(model_name)
+
+        model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+    
+    processor.tokenizer.padding_side = "left"
+
+    processor.tokenizer.pad_token_id = processor.tokenizer.eos_token_id
 
     question_files = [os.path.join(args.question_folder, x) for x in os.listdir(args.question_folder)]
 
@@ -55,7 +64,7 @@ def eval_model(args):
             for image_file, q in zip(image_files, qs):
                 try:
                     images.append(Image.open(image_file))
-                    prompts.append("[INST] <image>\n"+ q +" [/INST]")
+                    prompts.append("USER: <image>\n"+ q +" ASSISTANT:")
                 except PIL.UnidentifiedImageError:
                     continue
             
@@ -89,7 +98,7 @@ def eval_model(args):
 
                     line["model_id"] = model_name
 
-                    line["output"] = pred
+                    line["output"] = output_labels[pred]
 
                     model_outputs.append(line)
         
