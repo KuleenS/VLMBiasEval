@@ -33,7 +33,7 @@ pip install -r requirements.txt
    - **Original Article**: [VLStereoSet](https://aclanthology.org/2022.aacl-main.40.pdf)
 
 3. **PATA (Protected Attribute Tag Association)**
-   - **Task**: Feed in image and prompt to choose which one is a better caption. Each image has a positive and a negative caption, where the negative captions consist of untoward and offensive text in the context of each protected attribute.
+   - **Task**: Feed in image and prompt to choose which one is a better caption. Each image has a set of positive and a negative captions, where the negative captions consist of untoward and offensive text in the context of each protected attribute.
    - **Original Article**: [PATA](https://arxiv.org/pdf/2303.10431.pdf)
 
 ### Face Datasets
