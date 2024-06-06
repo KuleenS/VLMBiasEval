@@ -5,6 +5,8 @@ import json
 from tqdm import tqdm
 
 from transformers import CLIPProcessor, CLIPModel
+from medclip import MedCLIPModel, MedCLIPVisionModelViT
+from medclip import MedCLIPProcessor
 
 import PIL
 
@@ -18,9 +20,15 @@ def batch_iterable(iterable, n=1):
 def eval_model(args):
     model_name = args.model_path
 
-    processor = CLIPProcessor.from_pretrained(model_name)
+    if model_name == "med-clip":
+        processor = MedCLIPProcessor()
+        model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT)
+        model.from_pretrained(model_name)
+        model.cuda()
+    else:
+        processor = CLIPProcessor.from_pretrained(model_name)
 
-    model = CLIPModel.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+        model = CLIPModel.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
     
     question_files = [os.path.join(args.question_folder, x) for x in os.listdir(args.question_folder)]
 
@@ -28,23 +36,23 @@ def eval_model(args):
 
         with open(question_file, "r") as f:
             data = json.loads(f.read())
-        
+
         output_labels = data["labels"]
 
         questions = data["data"]
 
         model_outputs = []
 
-        questions_batched = batch_iterable(questions, args.batch_size)
+        questions_batched = batch_iterable(questions, 4)
 
         for batch in tqdm(questions_batched):
             image_files = [x["image"] for x in batch]
 
-            prompts = [x["prompt"] for x in batch]
+            prompts = batch[0]["prompt"]
 
             images = []
 
-            for image_file in zip(image_files):
+            for image_file in image_files:
                 try:
                     images.append(Image.open(image_file))
                 except PIL.UnidentifiedImageError:
@@ -57,7 +65,10 @@ def eval_model(args):
                 with torch.inference_mode():
                     outputs = model(**inputs)
                 
-                logits_per_image = outputs.logits_per_image.cpu().detach()
+                if model_name == "med-clip":
+                    logits_per_image = outputs["logits_per_text"].T.cpu().detach()
+                else:
+                    logits_per_image = outputs.logits_per_image.cpu().detach()
                 
                 preds = logits_per_image.argmax(dim=1).tolist()
 
@@ -82,6 +93,7 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
+    parser.add_argument("--batch_size", type=int, default=1)
     args = parser.parse_args()
 
     eval_model(args)
