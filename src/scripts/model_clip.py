@@ -20,7 +20,7 @@ def batch_iterable(iterable, n=1):
 def eval_model(args):
     model_name = args.model_path
 
-    if model_name == "med-clip":
+    if "medclip" in model_name:
         processor = MedCLIPProcessor()
         model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT)
         model.from_pretrained(model_name)
@@ -65,7 +65,7 @@ def eval_model(args):
                 with torch.inference_mode():
                     outputs = model(**inputs)
                 
-                if model_name == "med-clip":
+                if "medclip" in model_name:
                     logits_per_image = outputs["logits_per_text"].T.cpu().detach()
                 else:
                     logits_per_image = outputs.logits_per_image.cpu().detach()
