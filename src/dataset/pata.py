@@ -134,7 +134,7 @@ class PATA(BaseDataset):
 
             options, action = self.prompt_options[key]
 
-            if len(prompt_options) != 0:
+            if len(options) != 0:
 
                 if model == "clip":
                     prompt = [x[1] for x in options]
