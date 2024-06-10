@@ -118,5 +118,5 @@ class VLStereo(BaseDataset):
     def create_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(model="clip")
         
-        with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}_clip.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_vlstereo_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)

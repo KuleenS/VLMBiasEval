@@ -152,7 +152,7 @@ class PadChest(BaseDataset):
     def create_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}_clip.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_padchest_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
 

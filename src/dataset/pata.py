@@ -174,5 +174,5 @@ class PATA(BaseDataset):
 
         final_data = self.generate_dataset_dict(model = "clip")
 
-        with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}_clip.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_pata_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
