@@ -36,6 +36,8 @@ class VisoGenderEval(BaseEvaluateDataset):
         
         df = pd.DataFrame(data)
 
+        df["output"] = df["output"].map({"A": 1, "B": 0})
+
         df["label_num"] = df["label"].apply(lambda x: 0 if x == "masculine" else 1)
 
         df["correct"] = df["output"] == df["label_num"]
@@ -72,6 +74,8 @@ class VisoGenderEval(BaseEvaluateDataset):
     def evaluate_oo(self, data: List[Dict[str, str]]) -> Dict[str, float]:
         df = pd.DataFrame(data)
 
+        df["output"] = df["output"].map({"A": 1, "B": 0})
+
         df["label_num"] = df["label"].apply(lambda x: 0 if x == "masculine" else 1)
 
         df["correct"] = df["output"] == df["label_num"]
@@ -97,5 +101,3 @@ class VisoGenderEval(BaseEvaluateDataset):
             return self.evaluate_op(data)
         else:
             return self.evaluate_oo(data)
-
-
