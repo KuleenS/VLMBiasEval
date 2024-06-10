@@ -35,7 +35,12 @@ class UTKFaceEval(BaseEvaluateDataset):
              
         label = [label_map[x["label"].lower()] for x in data]
 
-        output = [label_map[x["output"].lower()] for x in data]
+        if data[0]["output"].lower() in label_map:
+
+            output = [label_map[x["output"].lower()] for x in data]
+        
+        else:
+            output = [ord(x["output"])-65 for x in data]
 
         result = dict()
 
