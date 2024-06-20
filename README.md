@@ -14,6 +14,30 @@ cd safety-tuned-llava
 pip install -r requirements.txt
 ```
 
+## Scripts
+
+To run any script 
+
+```
+python -m src.scripts.<script_name> <args>
+```
+
+### convert_dicom.py
+Converts dicom from VinDR to JPG
+
+### evaluate.py
+Runs evaluation of output
+
+### generate_datasets.py
+Generates datasets from config.toml
+
+### model_clip.py
+Evaluate CLIP model
+
+### model_vqa.py
+Evaluate VQA model
+
+
 ## Models
 - **LLaVa**: Baseline VLLM model using ViT-L/14 for visuals and Vicuna for language.
 - **Safety Tuned LLaMas**: Models progressively tuned for safety. [More about Safety Tuned LLaMas](https://github.com/vinid/safety-tuned-llamas).
