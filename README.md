@@ -11,7 +11,7 @@ git clone https://github.com/your-repository/safety-tuned-llava.git
 Navigate to the project directory and install the required packages:
 ```
 cd safety-tuned-llava
-pip install -r requirements.txt
+conda env create -f safety_tuned_llava.yaml
 ```
 
 ## Scripts
