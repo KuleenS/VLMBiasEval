@@ -26,8 +26,6 @@ class UTKFace(BaseDataset):
 
         self.data = self.prepare_metadata(self.files)
 
-        self.data["image"] = self.files
-
         self.predicting_mode, self.protected_category_mode = self.mode.split("_")
 
         if self.predicting_mode == "race":
@@ -44,7 +42,7 @@ class UTKFace(BaseDataset):
             self.outputs = ["A", "B"]
             self.clip_outputs = ["male", "female"]
 
-        self.train_images, self.test_eval_images = train_test_split(self.files, test_size=0.2, random_state=0)
+        self.train_images, self.test_eval_images = train_test_split(self.data, test_size=0.2, random_state=0)
 
         self.eval_images, self.test_images = train_test_split(self.test_eval_images, test_size=0.5, random_state=0)
 
@@ -59,34 +57,32 @@ class UTKFace(BaseDataset):
         return total_files
 
     def prepare_metadata(self, list_of_files: List[str]):
-        meta_data = [os.path.basename(x).split(".")[0].split("_")[:3] for x in list_of_files]
+        meta_data = []
+        for total_file in list_of_files:
+            age, gender, race = os.path.basename(total_file).split("_")[:3]
 
-        meta_data_normalized = [[int(y) if len(y) != 0 else None for y in x] for x in meta_data]
+            meta_data.append([total_file, int(age), int(gender), int(race)])
 
-        meta_data = pd.DataFrame(meta_data_normalized, columns = ['age', 'gender', 'race'])
+        meta_data_df = pd.DataFrame(meta_data, columns = ['image', 'age', 'gender', 'race'])
 
-        meta_data["age"] = pd.cut(meta_data["age"], [0, 20, 40, 60, 116], right=True, include_lowest=True, labels=["Child", "Young", "Middle-Aged", "Senior"])
+        meta_data_df["age"] = pd.cut(meta_data_df["age"], [0, 20, 40, 60, 116], right=True, include_lowest=True, labels=["Child", "Young", "Middle-Aged", "Senior"])
 
-        meta_data["race"] = meta_data["race"].map({0: "White", 1:"Black", 2:"Asian", 3:"Indian", 4: "Others"})
+        meta_data_df["race"] = meta_data_df["race"].map({0: "White", 1:"Black", 2:"Asian", 3:"Indian", 4: "Others"})
 
-        meta_data["gender"] = meta_data["gender"].map({0: "Male", 1:"Female"})
-
-        meta_data["image"] = list_of_files
-
-        return meta_data
+        meta_data_df["gender"] = meta_data_df["gender"].map({0: "Male", 1:"Female"})
+       
+        return meta_data_df
 
     def generate_dataset_dict(self, prompt: str | List[str]):
-        test_items = self.test_images
-
-        filtered_metadata = self.data[self.data.image.isin(test_items)]
+        filtered_metadata = self.test_images
 
         protected_category = filtered_metadata[self.protected_category_mode]
 
         labels = filtered_metadata[self.predicting_mode] 
 
-        prompts = [prompt]*len(test_items)
+        prompts = [prompt]*len(filtered_metadata)
 
-        list_of_tuples = list(zip(prompts, test_items, labels, protected_category))
+        list_of_tuples = list(zip(prompts, filtered_metadata["image"], labels, protected_category))
 
         keys = ["prompt", "image", "label", "protected_category"]
 
