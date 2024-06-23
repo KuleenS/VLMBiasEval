@@ -89,9 +89,9 @@ class MIMIC(BaseDataset):
 
         return df
     
-    def generate_dataset_dict(self, prompt: str | List[str]):
+    def generate_dataset_dict(self, prompt: str | List[str], split: str ="test"):
 
-        split_items = self.annotations[self.annotations.split == "test"]
+        split_items = self.annotations[self.annotations.split == split]
 
         test_images = list(split_items["filename"])
 
@@ -113,17 +113,28 @@ class MIMIC(BaseDataset):
         final_data = {"data": list_of_dict, "labels": self.outputs}
 
         return final_data
-    
-    def create_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(self.prompt)
-        
-        with open(os.path.join(self.output_folder, f"zeroshot_mimic_{self.mode}.json"), "w") as f:
+
+    def create_train_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt, split="train")
+
+        with open(os.path.join(self.output_folder, f"zeroshot_train_mimic_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
-        
-    def create_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(self.clip_outputs)
-        
-        with open(os.path.join(self.output_folder, f"clipzeroshot_mimic_{self.mode}.json"), "w") as f:
+    
+    def create_test_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_test_mimic_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
+    def create_train_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs, split="train")
+        
+        with open(os.path.join(self.output_folder, f"clipzeroshot_train_mimic_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+        
+    def create_test_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs)
+        
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_mimic_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
        
