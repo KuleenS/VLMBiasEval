@@ -73,8 +73,13 @@ class UTKFace(BaseDataset):
        
         return meta_data_df
 
-    def generate_dataset_dict(self, prompt: str | List[str]):
-        filtered_metadata = self.test_images
+    def generate_dataset_dict(self, prompt: str | List[str], split: int = 2):
+        if split == 0:
+            filtered_metadata = self.train_images
+        elif split == 1:
+            filtered_metadata = self.eval_images
+        elif split == 2: 
+            filtered_metadata = self.test_images
 
         protected_category = filtered_metadata[self.protected_category_mode]
 
@@ -95,14 +100,26 @@ class UTKFace(BaseDataset):
         
         return final_data
     
-    def create_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt, split=0)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_train_utkface_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+    
+    def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_test_utkface_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+
+    def create_train_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
         
-        with open(os.path.join(self.output_folder, f"zeroshot_utkface_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_train_utkface_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_clip_dataset(self) -> None:
+    def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_utkface_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_utkface_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
