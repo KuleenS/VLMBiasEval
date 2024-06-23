@@ -86,9 +86,9 @@ class CheXpert(BaseDataset):
 
         return df
 
-    def generate_dataset_dict(self, prompt: str | List[str]):
+    def generate_dataset_dict(self, prompt: str | List[str], split: int = 2):
 
-        split_items = self.annotations[self.annotations.split == 2]
+        split_items = self.annotations[self.annotations.split == split]
 
         test_images = list(split_items["filename"])
 
@@ -110,17 +110,30 @@ class CheXpert(BaseDataset):
         final_data = {"data": list_of_dict, "labels": self.outputs}
 
         return final_data
+    
+    def create_train_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt, split=0)
 
-    def create_llava_dataset(self) -> None:
+        with open(os.path.join(self.output_folder, f"zeroshot_train_chexpert_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+
+    def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_chexpert_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_test_chexpert_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
-    def create_clip_dataset(self) -> None:
+    def create_train_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
+        
+        with open(os.path.join(self.output_folder, f"clipzeroshot_train_chexpert_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+        
+    def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_chexpert_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_celeba_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
+
 
         
