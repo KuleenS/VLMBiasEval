@@ -70,9 +70,9 @@ class NIHCXR(BaseDataset):
 
         return df
 
-    def generate_dataset_dict(self, prompt: str | List[str]):
+    def generate_dataset_dict(self, prompt: str | List[str], split: int = 2):
 
-        split_items = self.annotations[self.annotations.split == 2]
+        split_items = self.annotations[self.annotations.split == split]
 
         test_items = list(split_items["Image Index"])
 
@@ -97,14 +97,26 @@ class NIHCXR(BaseDataset):
 
         return final_data
 
-    def create_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt, split=0)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_train_nih_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+    
+    def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_test_nih_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+
+    def create_train_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
         
-        with open(os.path.join(self.output_folder, f"zeroshot_nih_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_train_nih_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_clip_dataset(self) -> None:
+    def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_nih_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_nih_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
