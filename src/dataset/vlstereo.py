@@ -108,15 +108,21 @@ class VLStereo(BaseDataset):
         final_data = {"data": list_of_dict, "labels": self.outputs}
 
         return final_data
+
+    def create_train_llava_dataset(self) -> None:
+        raise NotImplementedError()
     
-    def create_llava_dataset(self) -> None:
+    def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(model="llava")
-        
-        with open(os.path.join(self.output_folder, f"zeroshot_vlstereo_{self.mode}.json"), "w") as f:
+
+        with open(os.path.join(self.output_folder, f"zeroshot_test_vlstereo_{self.text_mode}.json"), "w") as f:
             json.dump(final_data, f)
+
+    def create_train_clip_dataset(self) -> None:
+       raise NotImplementedError()
         
-    def create_clip_dataset(self) -> None:
+    def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(model="clip")
-        
-        with open(os.path.join(self.output_folder, f"clipzeroshot_vlstereo_{self.mode}.json"), "w") as f:
+
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_vlstereo_{self.text_mode}.json"), "w") as f:
             json.dump(final_data, f)
