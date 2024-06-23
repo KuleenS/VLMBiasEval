@@ -164,15 +164,20 @@ class PATA(BaseDataset):
 
         return final_data
     
-    def create_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model = "llava")
+    def create_train_llava_dataset(self) -> None:
+        raise NotImplementedError()
+    
+    def create_test_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model="llava")
 
-        with open(os.path.join(self.output_folder, f"zeroshot_pata_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_test_pata_{self.text_mode}.json"), "w") as f:
             json.dump(final_data, f)
+
+    def create_train_clip_dataset(self) -> None:
+       raise NotImplementedError()
         
-    def create_clip_dataset(self) -> None:
+    def create_test_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(model="clip")
 
-        final_data = self.generate_dataset_dict(model = "clip")
-
-        with open(os.path.join(self.output_folder, f"clipzeroshot_pata_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_pata_{self.text_mode}.json"), "w") as f:
             json.dump(final_data, f)
