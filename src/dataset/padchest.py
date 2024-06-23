@@ -6,6 +6,8 @@ from typing import List
 
 import pandas as pd
 
+from sklearn.model_selection import train_test_split
+
 from src.dataset.base_dataset import BaseDataset
 
 class PadChest(BaseDataset):
@@ -53,6 +55,10 @@ class PadChest(BaseDataset):
         self.outputs = ["Yes", "No"]
 
         self.clip_outputs = [f"{self.prediction_mode}", f"No {self.prediction_mode}"]
+
+        self.train_images, self.test_eval_images = train_test_split(self.data, test_size=0.2, random_state=0)
+
+        self.eval_images, self.test_images = train_test_split(self.test_eval_images, test_size=0.5, random_state=0)
 
     def bin_age(self, x):
         if pd.isnull(x): return None
@@ -121,14 +127,21 @@ class PadChest(BaseDataset):
 
         return df_filtered
     
-    def generate_dataset_dict(self, prompt: str | List[str]):
-        test_images = list(self.annotations["filename"])
+    def generate_dataset_dict(self, prompt: str | List[str], split: int = 2):
+        if split == 0:
+            filtered_metadata = self.train_images
+        elif split == 1:
+            filtered_metadata = self.eval_images
+        elif split == 2: 
+            filtered_metadata = self.test_images
+        
+        test_images = list(filtered_metadata["filename"])
 
-        labels = list(self.annotations[self.prediction_mode])
+        labels = list(filtered_metadata[self.prediction_mode])
 
         prompts = [prompt] * len(test_images)
 
-        protected_category = list(self.annotations[self.protected_category_mode])
+        protected_category = list(filtered_metadata[self.protected_category_mode])
 
         list_of_tuples = list(zip(prompts, test_images, labels, protected_category))
 
@@ -143,16 +156,27 @@ class PadChest(BaseDataset):
 
         return final_data
     
-    def create_llava_dataset(self):
+    def create_train_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt, split=0)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_train_utkface_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+    
+    def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_test_utkface_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+
+    def create_train_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
         
-        with open(os.path.join(self.output_folder, f"zeroshot_padchest_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_train_utkface_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
-    def create_clip_dataset(self) -> None:
+    def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
-
-        with open(os.path.join(self.output_folder, f"clipzeroshot_padchest_{self.mode}.json"), "w") as f:
+        
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_utkface_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
-
 
