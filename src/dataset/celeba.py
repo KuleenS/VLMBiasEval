@@ -43,8 +43,6 @@ class CelebA(BaseDataset):
         with open(input_file, "r") as f:
             texts = f.read().split("\n") 
         
-        print(texts[0])
-
         columns = np.array(texts[1].split(" "))
         columns = columns[columns != ""]
         df = []
@@ -65,8 +63,8 @@ class CelebA(BaseDataset):
                 df[nm] = pd.to_numeric(df[nm],downcast="integer")
         return df
     
-    def generate_dataset_dict(self, prompt: str | List[str]):
-        test_items = list(self.splits[self.splits.split == 2]["image"])
+    def generate_dataset_dict(self, prompt: str | List[str], split: int = 2):
+        test_items = list(self.splits[self.splits.split == split]["image"])
 
         labels_protected_category = self.annotations[self.annotations.image_id.isin(test_items)]
 
@@ -94,14 +92,26 @@ class CelebA(BaseDataset):
 
         return final_data
     
-    def create_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.prompt, split=0)
+
+        with open(os.path.join(self.output_folder, f"zeroshot_train_celeba_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+    
+    def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_celeba_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_test_celeba_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
-    def create_clip_dataset(self) -> None:
+    def create_train_clip_dataset(self) -> None:
+        final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
+        
+        with open(os.path.join(self.output_folder, f"clipzeroshot_train_celeba_{self.mode}.json"), "w") as f:
+            json.dump(final_data, f)
+        
+    def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_celeba_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"clipzeroshot_test_celeba_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
