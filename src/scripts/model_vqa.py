@@ -35,6 +35,8 @@ def eval_med_llava(args):
 
     question_files = [os.path.join(args.question_folder, x) for x in os.listdir(args.question_folder)]
 
+    model.eval()
+
     for question_file in question_files:
 
         with open(question_file, "r") as f:
@@ -126,6 +128,8 @@ def eval_model(args):
         processor.tokenizer.pad_token_id = processor.tokenizer.eos_token_id
 
         question_files = [os.path.join(args.question_folder, x) for x in os.listdir(args.question_folder)]
+
+        model.eval()
 
         for question_file in question_files:
 
