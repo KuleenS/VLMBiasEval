@@ -30,7 +30,7 @@ class LLaVaModelWrapper:
 
     def generate_text(self, inputs, **kwargs):
         generate_ids = self.model.generate(**inputs, **kwargs)
-        return self.processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+        return generate_ids
     
     def get_logits(self, inputs):
         with torch.no_grad():
