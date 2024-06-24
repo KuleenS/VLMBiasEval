@@ -3,6 +3,7 @@ output_folder = "/data/user/home/ksasse/code/safety_tuned_llava/data"
 # datasets = ["celeba", "chexpert", "mimic", "nih", "padchest", "pata", "utkface", "vindr", "visogender", "vlstereo"]
 # datasets = ["pata", "utkface", "vindr", "visogender", "vlstereo"]
 datasets = ["utkface"]
+split = "train"
 
 
 type_of_dataset = "llava"
