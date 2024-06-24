@@ -53,7 +53,7 @@ def main(args):
 
     wrapped_model = LLaVaModelWrapper(model, processor)
 
-    if os.path.exists(f"sycophancy_all_diffs_layer_{args.layer}.pt"):
+    if not os.path.exists(f"sycophancy_all_diffs_layer_{args.layer}.pt"):
 
         layers = list(range(21, 30))
 
