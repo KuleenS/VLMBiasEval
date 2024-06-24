@@ -9,8 +9,14 @@ class BaseDataset(ABC):
 
         self.output_folder = output_folder
     
-    def create_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> None:
+        pass
+    
+    def create_test_llava_dataset(self) -> None:
+        pass
+
+    def create_train_clip_dataset(self) -> None:
         pass
         
-    def create_clip_dataset(self) -> None:
+    def create_test_clip_dataset(self) -> None:
         pass
