@@ -12,6 +12,8 @@ import PIL
 
 from PIL import Image
 
+from model_wrapper import LLaVaModelWrapper
+
 def batch_iterable(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
@@ -38,6 +40,8 @@ def eval_model(args):
 
     layer_range = list(range(args.start, args.end))
 
+    wrapped_model = LLaVaModelWrapper(model, processor)
+
     for question_file in question_files:
 
         with open(question_file, "r") as f:
@@ -50,62 +54,51 @@ def eval_model(args):
         for layer in layer_range:
             model_outputs[layer] = []
 
-        questions_batched = batch_iterable(questions, args.batch_size)
+        for i,batch in tqdm(enumerate(questions)):
+            image_file = batch["image"]
 
-        for i,batch in tqdm(enumerate(questions_batched)):
-            image_files = [x["image"] for x in batch]
+            q = batch["prompt"]
 
-            qs = [x["prompt"] for x in batch]
+            try:
+                image = Image.open(image_file)
 
-            images = []
+                if model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
+                    prompt = f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:"
 
-            prompts = []
+                elif model_name in ["llava-hf/llava-v1.6-mistral-7b-hf"]:
+                    prompt = f"[INST] <image>\n{q} [/INST]"
 
-            for image_file, q in zip(image_files, qs):
-                try:
-                    images.append(Image.open(image_file))
+                elif model_name in ["llava-hf/llava-v1.6-34b-hf"]:
+                    prompt = f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n"
 
-                    if model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
-                        prompts.append(f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:")
-                    elif model_name in ["llava-hf/llava-v1.6-mistral-7b-hf"]:
-                        prompts.append(f"[INST] <image>\n{q} [/INST]")
-                    elif model_name in ["llava-hf/llava-v1.6-34b-hf"]:
-                        prompts.append(f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n")
-
-                except PIL.UnidentifiedImageError:
-                    continue
+            except PIL.UnidentifiedImageError:
+                continue
             
-            if len(images) != 0 and len(prompts) != 0:
+            inputs = processor(prompt, images=image, return_tensors="pt").to("cuda:0")
 
-                inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
+            with torch.inference_mode():
+                output = wrapped_model.generate_text(inputs,
+                        max_new_tokens=1,
+                        do_sample=False,
+                        temperature=None,
+                        top_p=None,
+                        num_beams=1,
+                        )
 
-                with torch.inference_mode():
-                    output = model.generate(**inputs,
-                            max_new_tokens=1,
-                            output_scores=True,
-                            return_dict_in_generate=True,
-                            output_hidden_states=True,
-                            do_sample=False,
-                            temperature=None,
-                            top_p=None,
-                            num_beams=1,
-                            )
-                hidden_states = output.hidden_states[0]
-
+            for layer in layer_range:
+                model_outputs[layer].append(wrapped_model.get_last_activations(layer)[0, -2, :].cpu().numpy())
+            
+            if len(model_outputs[layer_range[0]]) > 500:
                 for layer in layer_range:
-                    model_outputs[layer].append(hidden_states[layer].detach().cpu().numpy())
-                
-                if len(model_outputs[layer_range[0]]) > 150:
-                    for layer in layer_range:
-                        combined_output = np.concatenate(model_outputs[layer])
+                    combined_output = np.concatenate(model_outputs[layer])
 
-                        model_name_clean = args.model_path.replace("/", "-")
+                    model_name_clean = args.model_path.replace("/", "-")
 
-                        output_file_name = os.path.basename(question_file).split(".")[0] + f"{model_name_clean}_layer_{layer}_activations_batch_{i}.npz"
+                    output_file_name = os.path.basename(question_file).split(".")[0] + f"{model_name_clean}_layer_{layer}_activations_batch_{i}.npz"
 
-                        np.savez_compressed(os.path.join(args.output_folder, output_file_name), activations = combined_output)
+                    np.savez_compressed(os.path.join(args.output_folder, output_file_name), activations = combined_output)
 
-                        model_outputs[layer] = []
+                    model_outputs[layer] = []
         
         for layer in layer_range:
             combined_output = np.concatenate(model_outputs[layer])
@@ -125,7 +118,6 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
-    parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--start", type=int)
     parser.add_argument("--end", type=int)
 
