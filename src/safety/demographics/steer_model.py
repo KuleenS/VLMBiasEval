@@ -119,7 +119,7 @@ def main(args):
     pos_multiplier = 120
 
     wrapped_model.reset_all()
-    wrapped_model.set_add_activations(layer, pos_multiplier * unit_vec.cuda())
+    wrapped_model.set_add_activations(args.layer, pos_multiplier * unit_vec.cuda())
     
     with open(args.test_file, "r") as f:
         data = json.loads(f.read())
@@ -165,9 +165,9 @@ def main(args):
                         output_scores=True,
                         return_dict_in_generate=True,
                         do_sample=False,
-                        temperature=args.temperature,
-                        top_p=args.top_p,
-                        num_beams=args.num_beams,
+                        temperature=0,
+                        top_p=None,
+                        num_beams=1,
                         )
             
             g = output['scores'][0]
