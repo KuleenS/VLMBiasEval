@@ -48,7 +48,7 @@ def main(args):
 
     questions = data["data"]    
 
-    if os.path.exists(f"demographics_all_diffs_layer_{args.layer}.pt"):
+    if not os.path.exists(f"demographics_all_diffs_layer_{args.layer}.pt"):
 
         layers = list(range(21, 30))
 
@@ -191,7 +191,7 @@ def main(args):
             
             model_name_clean = args.model_path.replace("/", "-")
             
-            output_file_name = os.path.basename(args.test_file).split(".")[0] + f"{model_name_clean}_answers.json"
+            output_file_name = os.path.basename(args.test_file).split(".")[0] + f"demographic_steered_{model_name_clean}_answers.json"
 
             with open(os.path.join(args.output_folder, output_file_name), "w") as f:
                 json.dump(model_outputs, f)
