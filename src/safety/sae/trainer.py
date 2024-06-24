@@ -10,18 +10,27 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 from transformers import get_linear_schedule_with_warmup, PreTrainedModel
 
+import PIL
+
+from PIL import Image
+
 from config import TrainConfig
 from sae import Sae
 from utils import geometric_median
 
+def batch_iterable(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
+
 
 class SaeTrainer:
-    def __init__(self, cfg: TrainConfig, dataset: Dataset, model: PreTrainedModel):
-        d_in = model.config.hidden_size
+    def __init__(self, cfg: TrainConfig, dataset, model: PreTrainedModel, processor):
+        d_in = model.config.text_config.hidden_size
 
         # If no layers are specified, train on all of them
         if not cfg.layers:
-            N = model.config.num_hidden_layers
+            N = model.config.text_config.num_hidden_layers + 1
             cfg.layers = list(range(0, N, cfg.layer_stride))
         
         self.cfg = cfg
@@ -34,6 +43,7 @@ class SaeTrainer:
 
         device = model.device
         self.model = model
+        self.processor = processor
         self.saes = nn.ModuleList([Sae(d_in, cfg.sae, device) for _ in range(N)])
 
         d = d_in * cfg.sae.expansion_factor
@@ -86,11 +96,9 @@ class SaeTrainer:
         print(f"Number of model parameters: {num_model_params:_}")
 
         device = self.model.device
-        dl = DataLoader(
-            self.dataset,
-            batch_size=self.cfg.batch_size,
-            shuffle=True,
-        )
+
+        dl = batch_iterable(self.dataset, n=self.cfg.batch_size) 
+
         pbar = tqdm(dl, desc="Training", disable=not rank_zero)
 
         # This mask is zeroed out every training step
@@ -101,8 +109,26 @@ class SaeTrainer:
         avg_auxk_loss = torch.zeros(len(self.saes), device=device)
         avg_fvu = torch.zeros(len(self.saes), device=device)
 
-        for i, batch in enumerate(pbar):
-            # Bookkeeping for dead feature detection
+        for i, inputs in enumerate(pbar):
+            image_files = [x["image"] for x in inputs]
+
+            qs = [x["prompt"] for x in inputs]
+
+            images = []
+
+            prompts = []
+
+            for image_file, q in zip(image_files, qs):
+                try:
+                    images.append(Image.open(image_file))
+
+                    prompts.append(f"[INST] <image>\n{q} [/INST]")
+
+                except PIL.UnidentifiedImageError:
+                    continue
+            
+            batch = self.processor(prompts, images=images, padding=True, return_tensors="pt")
+
             num_tokens_in_step += batch["input_ids"].numel()
 
             # Forward pass on the model to get the next batch of activations

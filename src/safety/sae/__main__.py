@@ -75,13 +75,11 @@ def load_artifacts(args: RunConfig, rank: int):
     with open(args.dataset, "r") as f:
         data = json.loads(f.read())
     
-    questions = data["data"]    
+    dataset = data["data"]    
   
     processor = LlavaNextProcessor.from_pretrained(args.model)
 
-    dataset = LLaVaDataset(questions, processor)
-
-    return model, dataset
+    return model, processor, dataset
 
 
 def run():
@@ -100,11 +98,11 @@ def run():
 
     # Awkward hack to prevent other ranks from duplicating data preprocessing
     if not ddp or rank == 0:
-        model, dataset = load_artifacts(args, rank)
+        model, processor, dataset = load_artifacts(args, rank)
     if ddp:
         dist.barrier()
         if rank != 0:
-            model, dataset = load_artifacts(args, rank)
+            model, processor,dataset = load_artifacts(args, rank)
         dataset = dataset.shard(dist.get_world_size(), rank)
 
     # Prevent ranks other than 0 from printing
@@ -112,7 +110,7 @@ def run():
         print(f"Training on '{args.dataset}' (split '{args.split}')")
         print(f"Storing model weights in {model.dtype}")
 
-        trainer = SaeTrainer(args, dataset, model)
+        trainer = SaeTrainer(args, dataset, model, processor)
         trainer.fit()
 
 
