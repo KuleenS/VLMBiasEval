@@ -36,6 +36,8 @@ def eval_model(args):
 
     model.eval()
 
+    layer_range = list(range(args.start, args.end))
+
     for question_file in question_files:
 
         with open(question_file, "r") as f:
@@ -45,7 +47,7 @@ def eval_model(args):
 
         model_outputs = dict()
 
-        for layer in args.layers:
+        for layer in layer_range:
             model_outputs[layer] = []
 
         questions_batched = batch_iterable(questions, args.batch_size)
@@ -90,11 +92,11 @@ def eval_model(args):
                             )
                 hidden_states = output.hidden_states[0]
 
-                for layer in args.layers:
+                for layer in layer_range:
                     model_outputs[layer].append(hidden_states[layer].detach().cpu().numpy())
                 
-                if len(model_outputs[args.layers[0]]) > 500:
-                    for layer in args.layers:
+                if len(model_outputs[layer_range[0]]) > 150:
+                    for layer in layer_range:
                         combined_output = np.concatenate(model_outputs[layer])
 
                         model_name_clean = args.model_path.replace("/", "-")
@@ -105,7 +107,7 @@ def eval_model(args):
 
                         model_outputs[layer] = []
         
-        for layer in args.layers:
+        for layer in layer_range:
             combined_output = np.concatenate(model_outputs[layer])
 
             model_name_clean = args.model_path.replace("/", "-")
@@ -124,7 +126,8 @@ if __name__ == "__main__":
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--batch_size", type=int, default=1)
-    parser.add_argument("--layers", type=int, nargs="+")
+    parser.add_argument("--start", type=int)
+    parser.add_argument("--end", type=int)
 
     args = parser.parse_args()
 
