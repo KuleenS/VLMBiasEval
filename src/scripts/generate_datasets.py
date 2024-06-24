@@ -23,7 +23,7 @@ def generate_zeroshot_dataset(dataset_name: str, input_folder: str, output_folde
 
     dataset: BaseDataset = dataset_map[dataset_name](input_folder, output_folder, mode)
 
-    if type_of_dataset == "train":
+    if split_of_dataset == "train":
         if type_of_dataset == "clip":
             dataset.create_train_clip_dataset()
         else:
