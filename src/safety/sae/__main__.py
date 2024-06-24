@@ -12,23 +12,21 @@ from transformers import (
     LlavaNextForConditionalGeneration, LlavaNextProcessor, BitsAndBytesConfig, PreTrainedModel,
 )
 
-from .data import LLaVaDataset
+from data import LLaVaDataset
 
 
-from .trainer import SaeTrainer, TrainConfig
+from trainer import SaeTrainer, TrainConfig
 
 
 @dataclass
 class RunConfig(TrainConfig):
     model: str = field(
         default="EleutherAI/pythia-160m",
-        positional=True,
     )
     """Name of the model to train."""
 
     dataset: str = field(
         default="togethercomputer/RedPajama-Data-1T-Sample",
-        positional=True,
     )
     """Path to the dataset to use for training."""
 

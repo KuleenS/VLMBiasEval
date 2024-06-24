@@ -10,10 +10,9 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 from transformers import get_linear_schedule_with_warmup, PreTrainedModel
 
-from . import __version__
-from .config import TrainConfig
-from .sae import Sae
-from .utils import geometric_median
+from config import TrainConfig
+from sae import Sae
+from utils import geometric_median
 
 
 class SaeTrainer:

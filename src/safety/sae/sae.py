@@ -7,8 +7,8 @@ import torch
 from safetensors.torch import load_model, save_model
 from torch import nn, Tensor
 
-from .config import SaeConfig
-from .kernels import TritonDecoder
+from config import SaeConfig
+from kernels import TritonDecoder
 
 
 class ForwardOutput(NamedTuple):
