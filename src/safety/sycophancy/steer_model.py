@@ -87,100 +87,101 @@ def main(args):
         vec = diffs[args.layer].mean(dim=0)
         unit_vec = vec / torch.norm(vec, p=2)
     
-    else:
-        vec_data = torch.load(f"sycophancy_all_diffs_layer_{args.layer}.pt")
+
+    for steering_vector_layer in args.layers:
+
+        vec_data = torch.load(f"sycophancy_all_diffs_layer_{steering_vector_layer}.pt")
 
         vec = vec_data.mean(dim=0)
         unit_vec = vec / torch.norm(vec, p=2)
-
-    pos_multiplier = 120
-
-    wrapped_model.reset_all()
-    wrapped_model.set_add_activations(args.layer, pos_multiplier * unit_vec.cuda())
     
-    with open(args.question_file, "r") as f:
-        data = json.loads(f.read())
-    
-    output_labels = data["labels"]
+        for multiplier in [0.5, 1, 2, 5, 10]:
+            wrapped_model.reset_all()
+            wrapped_model.set_add_activations(steering_vector_layer, multiplier * unit_vec.cuda())
 
-    questions = data["data"]
-
-    model_outputs = []
-
-    questions_batched = batch_iterable(questions, args.batch_size)
-
-    for batch in tqdm(questions_batched):
-        image_files = [x["image"] for x in batch]
-
-        qs = [x["prompt"] for x in batch]
-
-        images = []
-
-        prompts = []
-
-        for image_file, q in zip(image_files, qs):
-            try:
-                images.append(Image.open(image_file))
-
-                if model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
-                    prompts.append(f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:")
-                elif model_name in ["llava-hf/llava-v1.6-mistral-7b-hf"]:
-                    prompts.append(f"[INST] <image>\n{q} [/INST]")
-                elif model_name in ["llava-hf/llava-v1.6-34b-hf"]:
-                    prompts.append(f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n")
-
-            except PIL.UnidentifiedImageError:
-                continue
-        
-        if len(images) != 0 and len(prompts) != 0:
-
-            inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
-
-            with torch.inference_mode():
-                output = wrapped_model.generate_text(inputs,
-                        max_new_tokens=1,
-                        output_scores=True,
-                        return_dict_in_generate=True,
-                        do_sample=False,
-                        temperature=0,
-                        top_p=None,
-                        num_beams=1,
-                        )
+            with open(args.question_file, "r") as f:
+                data = json.loads(f.read())
             
-            g = output['scores'][0]
+            output_labels = data["labels"]
 
-            preds = []
+            questions = data["data"]
 
-            for i in g:
-                pred_options_logits = torch.stack([i[tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
-                pred = pred_options_logits.argmax(dim=-1).item()
+            model_outputs = []
 
-                preds.append(pred)
-            
-            for line, prompt, pred in zip(batch, prompts, preds):
-                line["prompt"] = prompt
+            questions_batched = batch_iterable(questions, args.batch_size)
 
-                line["model_id"] = model_name
+            for batch in tqdm(questions_batched):
+                image_files = [x["image"] for x in batch]
 
-                line["output"] = output_labels[pred]
+                qs = [x["prompt"] for x in batch]
 
-                model_outputs.append(line)
-            
-            model_name_clean = args.model_path.replace("/", "-")
-            
-            output_file_name = os.path.basename(args.question_file).split(".")[0] + f"{model_name_clean}_answers.json"
+                images = []
 
-            with open(os.path.join(args.output_folder, output_file_name), "w") as f:
-                json.dump(model_outputs, f)
+                prompts = []
+
+                for image_file, q in zip(image_files, qs):
+                    try:
+                        images.append(Image.open(image_file))
+
+                        if model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
+                            prompts.append(f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:")
+                        elif model_name in ["llava-hf/llava-v1.6-mistral-7b-hf"]:
+                            prompts.append(f"[INST] <image>\n{q} [/INST]")
+                        elif model_name in ["llava-hf/llava-v1.6-34b-hf"]:
+                            prompts.append(f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n")
+
+                    except PIL.UnidentifiedImageError:
+                        continue
+                
+                if len(images) != 0 and len(prompts) != 0:
+
+                    inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
+
+                    with torch.inference_mode():
+                        output = wrapped_model.generate_text(inputs,
+                                max_new_tokens=1,
+                                output_scores=True,
+                                return_dict_in_generate=True,
+                                do_sample=False,
+                                temperature=0,
+                                top_p=None,
+                                num_beams=1,
+                                )
+                    
+                    g = output['scores'][0]
+
+                    preds = []
+
+                    for i in g:
+                        pred_options_logits = torch.stack([i[tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
+                        pred = pred_options_logits.argmax(dim=-1).item()
+
+                        preds.append(pred)
+                    
+                    for line, prompt, pred in zip(batch, prompts, preds):
+                        line["prompt"] = prompt
+
+                        line["model_id"] = model_name
+
+                        line["output"] = output_labels[pred]
+
+                        model_outputs.append(line)
+                    
+                    model_name_clean = args.model_path.replace("/", "-")
+                    
+                    output_file_name = os.path.basename(args.question_file).split(".")[0] + f"honesty_steered_{model_name_clean}_answers_{steering_vector_layer}_{multiplier}.json"
+
+                    with open(os.path.join(args.output_folder, output_file_name), "w") as f:
+                        json.dump(model_outputs, f)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
-    parser.add_argument("--question_file", type=str)
+    parser.add_argument("--model-path", type=str)
+    parser.add_argument("--test_file", type=str)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--batch_size", type=int, default=1)
-    parser.add_argument("--layer", type=int)
+    parser.add_argument("--layers", type=int, nargs = "+")
 
     args = parser.parse_args()
 
