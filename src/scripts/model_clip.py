@@ -58,19 +58,30 @@ def eval_model(args):
                 except PIL.UnidentifiedImageError:
                     continue
             
-            if len(images) != 0:
+            if (args.include_image and len(images) != 0) or (not args.include_image):
 
-                inputs = processor(text=prompts, images=images, return_tensors="pt", padding=True).to("cuda")
+                if args.include_image and len(images) != 0:
+                    inputs = processor(text=prompts, images=images, return_tensors="pt", padding=True).to("cuda")
 
-                with torch.inference_mode():
-                    outputs = model(**inputs)
-                
-                if "medclip" in model_name:
-                    logits_per_image = outputs["logits_per_text"].T.cpu().detach()
+                    with torch.inference_mode():
+                        outputs = model(**inputs)
+                    
+                    if "medclip" in model_name:
+                        logits = outputs["logits_per_text"].T.cpu().detach()
+                    else:
+                        logits = outputs.logits_per_image.cpu().detach()
                 else:
-                    logits_per_image = outputs.logits_per_image.cpu().detach()
+                    inputs = processor(text=prompts, return_tensors="pt", padding=True).to("cuda")
+
+                    with torch.inference_mode():
+                        outputs = model(**inputs)
+                    
+                    if "medclip" in model_name:
+                        logits = outputs["logits_per_text"].T.cpu().detach()
+                    else:
+                        logits = outputs.logits_per_text.cpu().detach()
                 
-                preds = logits_per_image.argmax(dim=1).tolist()
+                preds = logits.argmax(dim=1).tolist()
 
                 for line, prompt, pred in zip(batch, prompts, preds):
                     line["prompt"] = prompt
@@ -94,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--batch_size", type=int, default=1)
+    parser.add_argument("--include_image", type = bool, default = True)
     args = parser.parse_args()
 
     eval_model(args)

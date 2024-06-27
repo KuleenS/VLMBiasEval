@@ -51,27 +51,28 @@ def eval_med_llava(args):
         for line in tqdm(questions):
             image_file = line["image"]
             qs = line["prompt"].replace(DEFAULT_IMAGE_TOKEN, '').strip()
-            if model.config.mm_use_im_start_end:
-                qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
-            else:
-                qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+            if args.include_image:
+                if model.config.mm_use_im_start_end:
+                    qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
+                else:
+                    qs = DEFAULT_IMAGE_TOKEN + '\n' + qs   
 
             conv = conv_templates["mistral_instruct"].copy()
             conv.append_message(conv.roles[0], qs)
             conv.append_message(conv.roles[1], None)
             prompt = conv.get_prompt()
 
-            input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+            if args.include_image:
+                input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
-            try:
-                with Image.open(image_file) as img:
-                    image = img.convert('RGB')
-            except PIL.UnidentifiedImageError:
-                continue
-            
-            image_tensor = process_images([image], image_processor, model.config)[0]
+                try:
+                    with Image.open(image_file) as img:
+                        image = img.convert('RGB')
+                except PIL.UnidentifiedImageError:
+                    continue
+                
+                image_tensor = process_images([image], image_processor, model.config)[0]
 
-            with torch.inference_mode():
                 with torch.inference_mode():
                     output = model.generate(
                             input_ids,
@@ -85,6 +86,23 @@ def eval_med_llava(args):
                             top_p=args.top_p,
                             num_beams=args.num_beams,
                             )
+            
+            else:
+                input_ids = tokenizer(prompt, return_tensors='pt').input_ids
+                input_ids = input_ids.unsqueeze(0).cuda()
+
+                with torch.inference_mode():
+                    output = model.generate(
+                            input_ids,
+                            max_new_tokens=1,
+                            output_scores=True,
+                            return_dict_in_generate=True,
+                            do_sample=False,
+                            temperature=args.temperature,
+                            top_p=args.top_p,
+                            num_beams=args.num_beams,
+                            )
+
 
             g = output['scores'][0][0]
 
@@ -217,6 +235,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
+    parser.add_argument("--include_image", type=bool, default=True)
     args = parser.parse_args()
 
     eval_model(args)
