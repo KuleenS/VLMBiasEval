@@ -12,9 +12,6 @@ from transformers import (
     LlavaNextForConditionalGeneration, LlavaNextProcessor, BitsAndBytesConfig, PreTrainedModel,
 )
 
-from data import LLaVaDataset
-
-
 from trainer import SaeTrainer, TrainConfig
 
 
