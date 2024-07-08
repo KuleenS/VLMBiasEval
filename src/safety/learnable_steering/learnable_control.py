@@ -32,8 +32,8 @@ class RegressionModel(nn.Module):
     def forward(self, x):
         return self.mlp(x)
 
-class LlavaNextForConditionalGeneration(LlavaNextPreTrainedModel):
-    def __init__(self, config: LlavaNextConfig, num_regression_layers: int, dropout: float):
+class LlavaNextForLearnableControl(LlavaNextPreTrainedModel):
+    def __init__(self, config: LlavaNextConfig, num_regression_layers: int, dropout: float, layers: List[int]):
         super().__init__(config)
         self.vision_tower = AutoModel.from_config(config.vision_config)
 
@@ -44,7 +44,7 @@ class LlavaNextForConditionalGeneration(LlavaNextPreTrainedModel):
         self.vocab_size = config.text_config.vocab_size
         self.language_model = ControlModel(AutoModelForCausalLM.from_config(
             config.text_config, attn_implementation=config._attn_implementation
-        ))
+        ), layer_ids=layers)
         self.pad_token_id = self.config.pad_token_id if self.config.pad_token_id is not None else -1
         self._padding_side = "left"  # set it to left by default, user can use setter to change padding_sides
         self.post_init()
