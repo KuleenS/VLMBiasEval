@@ -14,6 +14,7 @@ from PIL import Image
 
 from src.safety.distributions.model_wrapper import LLaVaModelWrapper
 
+
 def batch_iterable(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
