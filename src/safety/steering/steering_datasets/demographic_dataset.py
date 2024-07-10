@@ -11,6 +11,9 @@ class DemographicDataset(SteeringDataset):
 
         self.questions = data["data"]
     
+    def __len__(self):
+        return len(self.questions)
+    
     def __getitem__(self, index):
 
         q = self.questions[index]["prompt"]

@@ -10,6 +10,8 @@ class StereoSetDataset(SteeringDataset):
 
         dataset_contexts = dataset["validation"]["context"]
 
+        bias_types = dataset["validation"]["bias_type"]
+
         self.pairs = []
 
         self.mode = mode
@@ -19,9 +21,9 @@ class StereoSetDataset(SteeringDataset):
         if self.mode not in ["gender", "race"]:
             raise ValueError()
 
-        for context, item in zip(dataset_contexts, dataset_sentences):
-            
-            if self.mode == item["bias_type"]:
+        for context, item, bias_type in zip(dataset_contexts, dataset_sentences, bias_types):
+
+            if self.mode == bias_type:
                 sentences = item["sentence"]
                 gold_labels = item["gold_label"]
 
@@ -39,6 +41,9 @@ class StereoSetDataset(SteeringDataset):
                 anti_stereotype_prompt = prompt_item + "\n B"
 
                 self.pairs.append((anti_stereotype_prompt, stereotype_prompt))
+    
+    def __len__(self):
+        return len(self.pairs)
     
     def __getitem__(self, index):
 

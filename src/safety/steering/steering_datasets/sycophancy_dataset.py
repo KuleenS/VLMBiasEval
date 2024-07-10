@@ -17,6 +17,9 @@ class SycophancyDataset(SteeringDataset):
             for question, match, not_match in zip(dataset['question'], dataset['answer_matching_behavior'], dataset['answer_not_matching_behavior']):
                 self.pairs.append(('Question: ' + question + match, 'Question: ' + question + not_match))
     
+    def __len__(self):
+        return len(self.pairs)
+    
     def __getitem__(self, index):
 
         anti_stereotype, stereotype = self.pairs[index]
