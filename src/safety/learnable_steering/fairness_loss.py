@@ -10,7 +10,7 @@ def computeBatchCounts(protectedAttributes,intersectGroups,predictions):
     countsClassOne = torch.zeros((len(intersectGroups)),dtype=torch.float)
     countsTotal = torch.zeros((len(intersectGroups)),dtype=torch.float)
     for i in range(len(predictions)):
-        index=np.where((intersectGroups==protectedAttributes[i]).all(axis=1))[0][0]
+        index=intersectGroups.index(protectedAttributes[i])
         countsTotal[index] = countsTotal[index] + 1
         countsClassOne[index] = countsClassOne[index] + predictions[i]        
     return countsClassOne, countsTotal

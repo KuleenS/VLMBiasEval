@@ -13,8 +13,7 @@ from transformers.models.llava_next.configuration_llava_next import LlavaNextCon
 from transformers.models.llava_next.modeling_llava_next import LlavaNextPreTrainedModel, LlavaNextMultiModalProjector, LlavaNextCausalLMOutputWithPast
 from transformers.models.llava_next.modeling_llava_next import image_size_to_num_patches, unpad_image, get_anyres_image_grid_shape
 
-
-from src.safety.learnable_steering.control import ControlModel
+from src.safety.learnable_steering.control import ControlModel, ControlVector
 
 
 class RegressionModel(nn.Module):
@@ -49,7 +48,9 @@ class LlavaNextForLearnableControl(LlavaNextPreTrainedModel):
         self._padding_side = "left"  # set it to left by default, user can use setter to change padding_sides
         self.post_init()
 
-        self.regression_model = RegressionModel(num_regression_layers, dropout)
+        self.layers = layers
+
+        self.regression_model = RegressionModel(self.config.text_config.hidden_size, num_regression_layers, dropout)
 
     @property
     def padding_side(self):
@@ -542,11 +543,15 @@ class LlavaNextForLearnableControl(LlavaNextPreTrainedModel):
 
                 position_ids = torch.sum(attention_mask, dim=1).unsqueeze(-1) - 1
         
-        control_vector = self.regression_model(inputs_embeds).mean(axis=1)
+        control_vector = self.regression_model(inputs_embeds).mean(axis=1)[0]
+
+        directions = {x: control_vector for x in self.layers}
+
+        control_vector_wrapped = ControlVector(self.config.text_config._name_or_path, directions)
 
         self.language_model.reset()
 
-        self.language_model.set_control(control_vector)
+        self.language_model.set_control(control_vector_wrapped)
 
         outputs = self.language_model(
             attention_mask=attention_mask,

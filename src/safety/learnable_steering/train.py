@@ -12,6 +12,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from tqdm import tqdm
+
 from transformers import LlavaNextProcessor, LlavaNextConfig, AutoTokenizer
 
 from src.safety.learnable_steering.learnable_control import LlavaNextForLearnableControl
@@ -39,10 +41,14 @@ def main(args):
 
     model.train()
 
-    with open(args.protected_category_weights) as f:
-            data = json.load(f)
+    model.language_model.set_raw_control(None)
+
+    with open(args.train_file) as f:
+        data = json.load(f)
         
     output_labels = data["labels"]
+
+    label_to_id = {label: i for i,label in enumerate(["Yes", "No"])}
 
     train_data = data["data"]
 
@@ -55,13 +61,15 @@ def main(args):
     optimizer = optim.Adam(model.regression_model.parameters(), lr = args.lr)
 
     for epoch in range(args.burn_in_epochs):
-        for batch in train_data:
+        for batch in tqdm(train_data):
 
             image_file = batch["image"]
 
             q = batch["prompt"]
 
-            label = batch["label"]
+            label = torch.nn.functional.one_hot(torch.tensor(label_to_id[batch["label"]]), num_classes=len(output_labels))
+
+            label = label.type(torch.DoubleTensor).to("cuda:0")
 
             try:
 
@@ -82,21 +90,18 @@ def main(args):
                 batch = processor(prompt, images=image, padding=True, return_tensors="pt").to("cuda:0")
 
                 # forward + backward + optimize
-                outputs = model.generate(**batch,
-                                max_new_tokens=1,
-                                output_scores=True,
-                                return_dict_in_generate=True,
-                                do_sample=False,
-                                temperature=0,
-                                top_p=None,
-                                num_beams=1,
-                            )
+                logits = model(**batch).logits[:, -1, :][0]
+
+                output_label_ids = [tokenizer.convert_tokens_to_ids(y_label) for y_label in output_labels]
+
+                mask = torch.zeros(logits.shape, dtype=torch.bool)
+
+                for output_label_id in output_label_ids:
+                    mask[output_label_id] = True
                 
-                g = outputs['scores'][0]
+                logits = logits.masked_select(mask.to("cuda:0"))
 
-                pred_options_logits = torch.stack([g[tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
-
-                tot_loss = criterion(pred_options_logits, label)
+                tot_loss = criterion(logits, label)
                 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -106,12 +111,14 @@ def main(args):
                 optimizer.step()
 
     for epoch in range(args.epochs):
-        for batch in train_data:
+        for batch in tqdm(train_data):
             image_file = batch["image"]
 
             q = batch["prompt"]
 
-            label = batch["label"]
+            label = torch.nn.functional.one_hot(torch.tensor(label_to_id[batch["label"]]), num_classes=len(output_labels))
+
+            label = label.type(torch.DoubleTensor).to("cuda:0")
 
             protected_category = batch["protected_category"]
 
@@ -133,36 +140,34 @@ def main(args):
             if image and prompt:
                 batch = processor(prompt, images=image, padding=True, return_tensors="pt").to("cuda:0")
 
-            
                 VB_CountModel.countClass_hat.detach_()
                 VB_CountModel.countTotal_hat.detach_()
             # forward + backward + optimize
 
-                outputs = model.generate(**batch,
-                                    max_new_tokens=1,
-                                    output_scores=True,
-                                    return_dict_in_generate=True,
-                                    do_sample=False,
-                                    temperature=0,
-                                    top_p=None,
-                                    num_beams=1,
-                                )
+                logits = model(**batch).logits[:, -1, :][0]
+
+                output_label_ids = [tokenizer.convert_tokens_to_ids(y_label) for y_label in output_labels]
+
+                mask = torch.zeros(logits.shape, dtype=torch.bool)
+
+                for output_label_id in output_label_ids:
+                    mask[output_label_id] = True
                 
-                g = outputs['scores'][0]
+                logits = logits.masked_select(mask.to("cuda:0"))
 
-                pred_options_logits = torch.stack([g[tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
+                prediction = logits.argmax(axis=0).unsqueeze(0)
 
-                loss = criterion(outputs, label)
+                loss = criterion(logits, label)
 
-            # update Count model 
-                countClass, countTotal = computeBatchCounts(protected_category, intersectional_groups,outputs)
+                #update Count model 
+                countClass, countTotal = computeBatchCounts([protected_category], intersectional_groups, prediction)
                 #thetaModel(stepSize,theta_batch)
-                VB_CountModel(args.step_size ,countClass, countTotal,len(train_data), 1)
-                
+                VB_CountModel(0.1,countClass, countTotal)
+
                 # fairness constraint 
-                lossDF = fairness_loss(args.epsilon_base,VB_CountModel)            
-                tot_loss = loss+args.l_fair*lossDF
-                
+                lossDF = fairness_loss(0.2231,VB_CountModel)            
+                tot_loss = loss+0.01*lossDF
+
                 # zero the parameter gradients
                 optimizer.zero_grad()
                 tot_loss.backward()
@@ -185,10 +190,6 @@ def main(args):
         q = batch["prompt"]
 
         label = batch["label"]
-
-        images = []
-
-        prompts = []
 
         image_file = batch["image"]
 
