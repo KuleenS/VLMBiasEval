@@ -20,6 +20,6 @@ class DemographicDataset(SteeringDataset):
 
         protected_category = self.questions[index]["protected_category"]
 
-        postive_prompt = q + f"Remember that the person in the patient is {protected_category}"
+        postive_prompt = q + f"Remember that the person also is {protected_category}"
 
         return postive_prompt, q, self.questions[index]["image"]
