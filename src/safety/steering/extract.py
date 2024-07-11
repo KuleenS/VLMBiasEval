@@ -150,11 +150,8 @@ def read_representations_bias(
     n_layers = len(model_layer_list(model))
     hidden_layers = [i if i >= 0 else n_layers + i for i in hidden_layers]
 
-    n_layers = len(model_layer_list(model))
-    hidden_layers = [i if i >= 0 else n_layers + i for i in hidden_layers]
-
     # the order is [positive, negative, positive, negative, ...]
-    train_strs = [(s, ex[2]) for ex in inputs for s in (ex[0])]
+    train_strs = [(ex[0], ex[2]) for ex in inputs]
 
     protected_categories = [ex[1] for ex in inputs]
 
@@ -300,29 +297,35 @@ def batched_get_hiddens(
 
         for image_file, q in zip(image_files, qs):
             try:
-                images.append(Image.open(image_file))
+                if image_file:
+                    images.append(Image.open(image_file))
+                else:
+                    images.append(None)
 
                 prompts.append(f"[INST] <image>\n{q} [/INST]")
 
             except PIL.UnidentifiedImageError:
                 continue
             
-            if len(images) != 0 and len(prompts) != 0:
+        if len(images) != 0 and len(prompts) != 0:
 
+            if all([x is None for x in images]):
+                inputs = tokenizer(prompts, padding=True, return_tensors="pt")
+            else:
                 inputs = tokenizer(prompts, images=images, padding=True, return_tensors="pt")
-                
-                with torch.no_grad():
-                    out = model(
-                        **inputs.to(model.device),
-                        output_hidden_states=True,
-                    )
-                
-                for layer in hidden_layers:
-                    # if not indexing from end, account for embedding hiddens
-                    hidden_idx = layer + 1 if layer >= 0 else layer
-                    for batch in out.hidden_states[hidden_idx]:
-                        hidden_states[layer].append(batch[-1, :].squeeze().cpu().numpy())
-                del out
+            
+            with torch.no_grad():
+                out = model(
+                    **inputs.to(model.device),
+                    output_hidden_states=True,
+                )
+            
+            for layer in hidden_layers:
+                # if not indexing from end, account for embedding hiddens
+                hidden_idx = layer + 1 if layer >= 0 else layer
+                for batch in out.hidden_states[hidden_idx]:
+                    hidden_states[layer].append(batch[-1, :].squeeze().cpu().numpy())
+            del out
 
     return {k: np.vstack(v) for k, v in hidden_states.items()}
 
