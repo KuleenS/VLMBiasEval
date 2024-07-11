@@ -4,8 +4,6 @@ import os
 
 import json
 
-from datasets import load_dataset
-
 import PIL
 
 from PIL import Image
@@ -64,7 +62,7 @@ def main(args):
 
         control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method, bias=True, protected_category_weights=data)
     else:
-        control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method)
+        control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method, bias=False)
 
     for steering_vector_layer in args.layers:
 
