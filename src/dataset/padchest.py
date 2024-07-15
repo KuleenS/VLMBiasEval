@@ -50,7 +50,7 @@ class PadChest(BaseDataset):
         
         self.prompt = f"Does this patient have {self.prediction_mode}? Answer the question using a single word or phrase."
 
-        self.annotations = self.get_annotations(self.input_folder)
+        self.data = self.get_annotations(self.input_folder)
 
         self.outputs = ["Yes", "No"]
 
