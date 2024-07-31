@@ -4,13 +4,15 @@ import os
 
 import json
 
+import pickle
+
 import PIL
 
 from PIL import Image
 
 import torch
 
-from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, AutoTokenizer
+from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 
 from tqdm import tqdm
 
@@ -23,7 +25,6 @@ from src.safety.steering.steering_datasets.sycophancy_dataset import SycophancyD
 from src.safety.steering.steering_datasets.protected_category_dataset import ProtectedCategoryDataset
 
 
-
 def batch_iterable(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
@@ -31,10 +32,6 @@ def batch_iterable(iterable, n=1):
 
 def main(args):
     model_name = args.model_path
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-    tokenizer.pad_token_id = tokenizer.eos_token_id
 
     processor = LlavaNextProcessor.from_pretrained(model_name)
 
@@ -46,24 +43,35 @@ def main(args):
 
     dataset = None
 
-    if args.dataset == "demographic":
-        dataset = DemographicDataset(args.demographic_file)
-    elif args.dataset == "sycophancy":
-        dataset = SycophancyDataset()
-    elif args.dataset == "stereoset":
-        dataset = StereoSetDataset(args.stereoset_mode)
-    elif args.dataset == "protected_category":
-        dataset = ProtectedCategoryDataset(args.demographic_file)
+    control_vectors_path = os.path.join(args.output_folder, f"control_vectors_{args.dataset}_{str(args.layers)}_{args.reduction_method}.pkl")
+
+    if not os.path.exists(control_vectors_path):
+
+        if args.dataset == "demographic":
+            dataset = DemographicDataset(args.demographic_file)
+        elif args.dataset == "sycophancy":
+            dataset = SycophancyDataset()
+        elif args.dataset == "stereoset":
+            dataset = StereoSetDataset(args.stereoset_mode)
+        elif args.dataset == "protected_category":
+            dataset = ProtectedCategoryDataset(args.demographic_file)
+        
+        if args.dataset == "protected_category":
+
+            with open(args.protected_category_weights) as f:
+                data = json.load(f)
+
+            control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method, bias=True, protected_category_weights=data)
+        else:
+            control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method, bias=False)
+        
+        with open(control_vectors_path, "wb") as f:
+            pickle.dump(control_vectors, f)
     
-    if args.dataset == "protected_category":
-
-        with open(args.protected_category_weights) as f:
-            data = json.load(f)
-
-        control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method, bias=True, protected_category_weights=data)
     else:
-        control_vectors = ControlVector.train(model, processor, dataset, hidden_layers=args.layers, method=args.reduction_method, bias=False)
-
+        with open(control_vectors_path, "rb") as f:
+            control_vectors = pickle.load(f)
+    
     for steering_vector_layer in args.layers:
 
         wrapped_model = ControlModel(model, args.layers)
@@ -111,7 +119,7 @@ def main(args):
                     inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
 
                     with torch.inference_mode():
-                        output = wrapped_model.generate_text(inputs,
+                        output = wrapped_model.generate(**inputs,
                                 max_new_tokens=1,
                                 output_scores=True,
                                 return_dict_in_generate=True,
@@ -126,7 +134,7 @@ def main(args):
                     preds = []
 
                     for i in g:
-                        pred_options_logits = torch.stack([i[tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
+                        pred_options_logits = torch.stack([i[processor.tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
                         pred = pred_options_logits.argmax(dim=-1).item()
 
                         preds.append(pred)
