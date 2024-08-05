@@ -47,7 +47,41 @@ def generate(prompt, image, model, temp = 0, top_p = None):
                 "max_output_tokens": 1,
                 "temperature": temp,
                 "top_p": top_p,
+            }
+        )
+
+        # Check if the content is blocked
+        if responses.candidates[0].finish_reason == FinishReason.SAFETY:
+            print("Content blocked by safety filters")
+            return 'Content blocked by safety filters'
+
+        return responses.text
+    except Exception as e:
+        print(f"Error in generate function: {e}")
+        # Handle other unexpected errors
+        return 'Error'
+    
+
+def xgenerate(prompt, model, temp = 0, top_p = None):
+    try:
+        vertexai.init(project="api2024-421420", location="us-central1")
+        model = GenerativeModel(
+            model,
+        )
+        safe = {
+    generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+}
+        responses = model.generate_content(
+            [prompt],
+            generation_config={
+                "max_output_tokens": 1,
+                "temperature": temp,
+                "top_p": top_p,
             },
+            safety_settings=safe
         )
 
         # Check if the content is blocked
@@ -103,22 +137,40 @@ def eval_model(args):
             questions_batched = batch_iterable(questions[index_to_start:], args.batch_size)
             for batch in tqdm(questions_batched):
                 for q in batch:
-                    try:
-                        prompt = q['prompt']
-                        image_file = q['image']
-                        keys = list(q.keys())
-                        special_topic = keys[-1]
-                        try:
-                            image = Image.open(image_file)
-                            image.verify()  # Verify that the image is not corrupted
-                            image = Image.open(image_file)  # Reopen image after verification
-                        except (PIL.UnidentifiedImageError, IOError) as e:
-                            print(f"Cannot identify image file {image_file}: {e}")
-                            continue
+                        if args.include_image:
+                            try:
+                                prompt = q['prompt']
+                                image_file = q['image']
+                                keys = list(q.keys())
+                                special_topic = keys[-1]
+                                try:
+                                    image = Image.open(image_file)
+                                    image.verify()  # Verify that the image is not corrupted
+                                    image = Image.open(image_file)  # Reopen image after verification
+                                except (PIL.UnidentifiedImageError, IOError) as e:
+                                    print(f"Cannot identify image file {image_file}: {e}")
+                                    continue
 
-                        prompt += " Answer with just the letter that corresponds to the correct answer."
+                                prompt += " Answer with just the letter that corresponds to the correct answer."
 
-                        response_text = generate(prompt, image, model_name, temp=temp, top_p=top_p)
+                                response_text = generate(prompt, image, model_name, temp=temp, top_p=top_p)
+                            except FileNotFoundError:
+                                print(f"Image file {image_file} not found")
+                                continue
+                            except PIL.UnidentifiedImageError:
+                                print(f"Cannot identify image file {image_file}")
+                                continue
+            
+
+                        else:
+                            prompt = q['prompt'].replace('the correct caption of this image?', 'most likely the correct sentence?')
+                            image_file = q['image']
+                            keys = list(q.keys())
+                            special_topic = keys[-1]
+
+                            prompt += " Answer with just the letter that corresponds to the correct answer."
+
+                            response_text = xgenerate(prompt, model_name, temp=temp, top_p=top_p)
                         
                         model_output = {
                             "prompt": prompt,
@@ -128,6 +180,7 @@ def eval_model(args):
                             "model_id": model_name,
                             "output": response_text[0]
                         }
+
                         model_outputs.append(model_output)
 
                         index_to_start+=1
@@ -140,13 +193,7 @@ def eval_model(args):
 
                         with open(os.path.join(args.output_folder, output_file_name), "w") as f:
                             json.dump(model_outputs, f)
-                    except FileNotFoundError:
-                        print(f"Image file {image_file} not found")
-                        continue
-                    except PIL.UnidentifiedImageError:
-                        print(f"Cannot identify image file {image_file}")
-                        continue
-            
+
         # model_name_clean = args.model_path.replace("/", "-")
         # output_file_name = f"{model_name_clean}_answers.json"
 
@@ -168,7 +215,8 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top_p", type=float, default=None)
-    parser.add_argument("--include_image", type=bool, default=True)
+    parser.add_argument("--include_image", action="store_true", default=True)
+    parser.add_argument("--exclude_image", action="store_false", dest="include_image")
     args = parser.parse_args()
 
     eval_model(args)
