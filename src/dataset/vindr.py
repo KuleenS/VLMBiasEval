@@ -113,24 +113,24 @@ class VINDR(BaseDataset):
     def create_train_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt, split=0)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_train_nih_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_train_vindr_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
     
     def create_test_llava_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.prompt)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_test_nih_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_train_vindr_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
     def create_train_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_train_nih_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_train_vindr_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
         
     def create_test_clip_dataset(self) -> None:
         final_data = self.generate_dataset_dict(self.clip_outputs)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_test_nih_{self.mode}.json"), "w") as f:
+        with open(os.path.join(self.output_folder, f"zeroshot_train_vindr_{self.mode}.json"), "w") as f:
             json.dump(final_data, f)
 
