@@ -34,10 +34,11 @@ def main(args):
     model_outputs = [os.path.join(folder, x) for x in os.listdir(folder)]
 
     for model_output in model_outputs:
-        try:
-            eval_results = evaluate_output(model_output)
+        eval_results = evaluate_output(model_output)
 
-            total_path = os.path.basename(model_output)
+        total_path = os.path.basename(model_output)
+
+        print(model_output,  ",".join(str(x) for x in list(eval_results.values())))
 
             if "pata" in total_path or "visogender" in total_path or "vlstereo" in total_path:
                 shots, dataset, mode_model_name, _ = total_path.split("_")
@@ -74,10 +75,6 @@ def main(args):
             print(",".join(header))
             print(",".join(str(x) for x in values))
 
-
-
-        except Exception as e:
-            print(model_output, e)
 
 
 if __name__ == "__main__":
