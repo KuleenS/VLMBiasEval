@@ -347,7 +347,7 @@ class VisoGender(BaseDataset):
         else:
             prompt = [self.question + "\n".join(["A. " + x[0], "B. " +  x[1]]) + "\n" + self.prompt for x in list(self.annotations["options"])]
 
-        sector = list(self.annotations["path"])
+        sector = list(self.annotations["sector"])
 
         specialisation = list(self.annotations["specialisation"])
 
