@@ -27,8 +27,13 @@ class VisoGenderEval(BaseEvaluateDataset):
 
             results_per_specialisation_and_sex[(correct_row.specialisation, correct_row.label)] = correct_row.correct/total_row.correct
         
+
         for specialisation in specialisations:
-            results_per_specialisations[specialisation] = results_per_specialisation_and_sex[(specialisation, "masculine")] - results_per_specialisation_and_sex[(specialisation, "feminine")]
+
+            if (specialisation, "masculine") in results_per_specialisation_and_sex and (specialisation, "feminine") in results_per_specialisation_and_sex:
+                results_per_specialisations[specialisation] = results_per_specialisation_and_sex[(specialisation, "masculine")] - results_per_specialisation_and_sex[(specialisation, "feminine")]
+            else:
+                results_per_specialisations[specialisation] = None
         
         return results_per_specialisations
 
@@ -36,13 +41,11 @@ class VisoGenderEval(BaseEvaluateDataset):
         
         df = pd.DataFrame(data)
 
-        df["output"] = df["output"].map({"A": 1, "B": 0})
+        df["label_letter"] = df["label"].apply(lambda x: "B" if x == "feminine" else "A")
 
-        df["label_num"] = df["label"].apply(lambda x: 0 if x == "masculine" else 1)
+        df["correct"] = df["output"] == df["label_letter"]
 
-        df["correct"] = df["output"] == df["label_num"]
-
-        overall_accuracy = len(df[df["output"] == df["label_num"]])/len(df)
+        overall_accuracy = len(df[df["output"] == df["label_letter"]])/len(df)
 
         overall_results = self.get_scores(df)
 
@@ -74,13 +77,11 @@ class VisoGenderEval(BaseEvaluateDataset):
     def evaluate_oo(self, data: List[Dict[str, str]]) -> Dict[str, float]:
         df = pd.DataFrame(data)
 
-        df["output"] = df["output"].map({"A": 1, "B": 0})
+        df["label_letter"] = df["label"].apply(lambda x: "B" if x == "feminine" else "A")
 
-        df["label_num"] = df["label"].apply(lambda x: 0 if x == "masculine" else 1)
+        df["correct"] = df["output"] == df["label_letter"]
 
-        df["correct"] = df["output"] == df["label_num"]
-
-        overall_accuracy = len(df[df["output"] == df["label_num"]])/len(df)
+        overall_accuracy = len(df[df["output"] == df["label_letter"]])/len(df)
 
         overall_results = self.get_scores(df)
 
@@ -96,7 +97,7 @@ class VisoGenderEval(BaseEvaluateDataset):
     def evaluate(self, path: str) -> Dict[str, float]:
         with open(path) as f:
             data = json.load(f)
-
+        
         if "OP" in path:
             return self.evaluate_op(data)
         else:
