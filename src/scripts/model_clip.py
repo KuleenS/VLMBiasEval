@@ -58,9 +58,9 @@ def eval_model(args):
                 except PIL.UnidentifiedImageError:
                     continue
             
-            if (args.include_image and len(images) != 0) or (not args.include_image):
+            if len(images) != 0:
 
-                if args.include_image and len(images) != 0:
+                if args.include_image:
                     inputs = processor(text=prompts, images=images, return_tensors="pt", padding=True).to("cuda")
 
                     with torch.inference_mode():
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--question_folder", type=str)
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--batch_size", type=int, default=1)
-    parser.add_argument("--include_image", type = bool, default = True)
+    parser.add_argument("--include_image", action="store_true", default=False)
     args = parser.parse_args()
 
     eval_model(args)
