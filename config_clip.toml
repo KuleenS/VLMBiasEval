@@ -1,7 +1,11 @@
-output_folder = "/data/user/home/ksasse/code/safety_tuned_llava/data/clip/test"
+output_folder = "/data/user/home/ksasse/code/safety_tuned_llava/data"
 
-datasets = ["celeba", "chexpert", "mimic", "nih", "padchest", "pata", "utkface", "visogender", "vlstereo", "vindr"]
+# datasets = ["celeba", "chexpert", "mimic", "nih", "padchest", "pata", "utkface", "vindr", "visogender", "vlstereo"]
+# datasets = ["pata", "utkface", "vindr", "visogender", "vlstereo"]
+datasets = ["pata", "visogender", "vlstereo"]
+# datasets = ["celeba"]
 split = "test"
+
 
 type_of_dataset = "clip"
 
