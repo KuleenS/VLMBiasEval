@@ -6,11 +6,11 @@
 ## Installation
 Clone the repository to your local machine:
 ```
-git clone https://github.com/your-repository/safety-tuned-llava.git
+git clone https://github.com/KuleenS/VLMBiasEval.git
 ```
 Navigate to the project directory and install the required packages:
 ```
-cd safety-tuned-llava
+cd VLMBiasEval
 conda env create -f safety_tuned_llava.yaml
 ```
 
