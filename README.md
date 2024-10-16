@@ -1,7 +1,7 @@
 # VLMBiasEval
 
 ## Description
-"VLMBiasEval" is a research project exploring the impact of using aligned language models on the fairness and bias of Visual Language Models (VLLMs) like LLaVa. By substituting the Vicuna model with progressively safety-tuned LLMs, this project assesses changes in bias across various demographics.
+"VLMBiasEval" is a research project exploring the fairness and bias of Visual Language Models (VLLMs) like LLaVa.
 
 ## Installation
 Clone the repository to your local machine:
