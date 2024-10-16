@@ -1,7 +1,7 @@
-# SafetyTunedLLaVa
+# VLMBiasEval
 
 ## Description
-"SafetyTunedLLaVa" is a research project exploring the impact of using aligned language models on the fairness and bias of Visual Language Models (VLLMs) like LLaVa. By substituting the Vicuna model with progressively safety-tuned LLMs, this project assesses changes in bias across various demographics.
+"VLMBiasEval" is a research project exploring the impact of using aligned language models on the fairness and bias of Visual Language Models (VLLMs) like LLaVa. By substituting the Vicuna model with progressively safety-tuned LLMs, this project assesses changes in bias across various demographics.
 
 ## Installation
 Clone the repository to your local machine:
@@ -41,13 +41,9 @@ Evaluate VQA model
 Evaluate VQA model on adversarial VisoGender 
 
 ## Models
-- **LLaVa**: Baseline VLLM model using ViT-L/14 for visuals and Vicuna for language.
-- **Safety Tuned LLaMas**: Models progressively tuned for safety. [More about Safety Tuned LLaMas](https://github.com/vinid/safety-tuned-llamas).
-
-## Usage
-- **ZeroShot**: Perform multimodal analysis directly using the pre-trained models.
-- **Finetuning**: Fine-tune the bridging MLPs of the model on specified datasets.
-- **Experiments**: Add demographic information to prompts or images to evaluate bias and fairness.
+- **LLaVa**: Set of LLaVa 1.6 models from 7B to 34B from llava-hf
+- **CLIP**: CLIP Large 224 and CLIP Large 336
+- **Gemini**: Gemini Flash 001 
 
 ### General Datasets
 1. **VisoGender**
@@ -83,7 +79,7 @@ Evaluate the models based on:
 - Fairness metrics: GAP, Equalized Odds, Demographic Parity, Disparate Impact.
 
 ## Contributing
-Contributions to "SafetyTunedLLaVa" are welcome. Please submit a pull request or open an issue to discuss potential changes or additions.
+Contributions to "VLMBiasEval" are welcome. Please submit a pull request or open an issue to discuss potential changes or additions.
 
 ## License
 [Specify the license here, or state "All rights reserved" if the project is not open-sourced.]
