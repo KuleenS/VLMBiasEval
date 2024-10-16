@@ -37,6 +37,8 @@ Evaluate CLIP model
 ### model_vqa.py
 Evaluate VQA model
 
+### model_adversarial.py
+Evaluate VQA model on adversarial VisoGender 
 
 ## Models
 - **LLaVa**: Baseline VLLM model using ViT-L/14 for visuals and Vicuna for language.
