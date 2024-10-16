@@ -11,7 +11,7 @@ git clone https://github.com/KuleenS/VLMBiasEval.git
 Navigate to the project directory and install the required packages:
 ```
 cd VLMBiasEval
-conda env create -f safety_tuned_llava.yaml
+conda env create -f vlmbiaseval.yaml
 ```
 
 ## Scripts
@@ -37,8 +37,14 @@ Evaluate CLIP model
 ### model_vqa.py
 Evaluate VQA model
 
+### model_med_vqa.py
+Evaluate LLaVa-Med Model
+
 ### model_adversarial.py
 Evaluate VQA model on adversarial VisoGender 
+
+### model_gemini.py
+Evaluate gemini
 
 ## Models
 - **LLaVa**: Set of LLaVa 1.6 models from 7B to 34B from llava-hf
