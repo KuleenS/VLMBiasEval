@@ -6,8 +6,6 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 from fairlearn.metrics import demographic_parity_difference, demographic_parity_ratio, equalized_odds_difference, equalized_odds_ratio
 
-
-
 class BaseEvaluateDataset(ABC):
 
     def __init__(self) -> None:

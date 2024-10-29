@@ -34,11 +34,14 @@ Generates datasets from config.toml
 ### model_clip.py
 Evaluate CLIP model
 
+To use medclip you must install it from the pip package or the repo (https://github.com/RyanWangZf/MedCLIP)
+However, it does have older versioning of some packages so please be mindful of conflicts that could occur
+
 ### model_vqa.py
 Evaluate VQA model
 
 ### model_med_vqa.py
-Evaluate LLaVa-Med Model
+Evaluate LLaVa-Med Model (you need to install LLaVa Med Repo before https://github.com/microsoft/LLaVA-Med)
 
 ### model_adversarial.py
 Evaluate VQA model on adversarial VisoGender 

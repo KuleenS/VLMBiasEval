@@ -5,8 +5,6 @@ import json
 from tqdm import tqdm
 
 from transformers import CLIPProcessor, CLIPModel
-from medclip import MedCLIPModel, MedCLIPVisionModelViT
-from medclip import MedCLIPProcessor
 
 import PIL
 
@@ -21,6 +19,10 @@ def eval_model(args):
     model_name = args.model_path
 
     if "medclip" in model_name:
+
+        from medclip import MedCLIPModel, MedCLIPVisionModelViT
+        from medclip import MedCLIPProcessor
+
         processor = MedCLIPProcessor()
         model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT)
         model.from_pretrained(model_name)
