@@ -1,17 +1,17 @@
-# SafetyTunedLLaVa
+# VLMBiasEval
 
 ## Description
-"SafetyTunedLLaVa" is a research project exploring the impact of using aligned language models on the fairness and bias of Visual Language Models (VLLMs) like LLaVa. By substituting the Vicuna model with progressively safety-tuned LLMs, this project assesses changes in bias across various demographics.
+"VLMBiasEval" is a research project exploring the fairness and bias of Visual Language Models (VLLMs) like LLaVa.
 
 ## Installation
 Clone the repository to your local machine:
 ```
-git clone https://github.com/your-repository/safety-tuned-llava.git
+git clone https://github.com/KuleenS/VLMBiasEval.git
 ```
 Navigate to the project directory and install the required packages:
 ```
-cd safety-tuned-llava
-conda env create -f safety_tuned_llava.yaml
+cd VLMBiasEval
+conda env create -f vlmbiaseval.yaml
 ```
 
 ## Scripts
@@ -34,18 +34,25 @@ Generates datasets from config.toml
 ### model_clip.py
 Evaluate CLIP model
 
+To use medclip you must install it from the pip package or the repo (https://github.com/RyanWangZf/MedCLIP)
+However, it does have older versioning of some packages so please be mindful of conflicts that could occur
+
 ### model_vqa.py
 Evaluate VQA model
 
+### model_med_vqa.py
+Evaluate LLaVa-Med Model (you need to install LLaVa Med Repo before https://github.com/microsoft/LLaVA-Med)
+
+### model_adversarial.py
+Evaluate VQA model on adversarial VisoGender 
+
+### model_gemini.py
+Evaluate gemini
 
 ## Models
-- **LLaVa**: Baseline VLLM model using ViT-L/14 for visuals and Vicuna for language.
-- **Safety Tuned LLaMas**: Models progressively tuned for safety. [More about Safety Tuned LLaMas](https://github.com/vinid/safety-tuned-llamas).
-
-## Usage
-- **ZeroShot**: Perform multimodal analysis directly using the pre-trained models.
-- **Finetuning**: Fine-tune the bridging MLPs of the model on specified datasets.
-- **Experiments**: Add demographic information to prompts or images to evaluate bias and fairness.
+- **LLaVa**: Set of LLaVa 1.6 models from 7B to 34B from llava-hf
+- **CLIP**: CLIP Large 224 and CLIP Large 336
+- **Gemini**: Gemini Flash 001 
 
 ### General Datasets
 1. **VisoGender**
@@ -81,7 +88,7 @@ Evaluate the models based on:
 - Fairness metrics: GAP, Equalized Odds, Demographic Parity, Disparate Impact.
 
 ## Contributing
-Contributions to "SafetyTunedLLaVa" are welcome. Please submit a pull request or open an issue to discuss potential changes or additions.
+Contributions to "VLMBiasEval" are welcome. Please submit a pull request or open an issue to discuss potential changes or additions.
 
 ## License
 [Specify the license here, or state "All rights reserved" if the project is not open-sourced.]

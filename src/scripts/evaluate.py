@@ -40,40 +40,40 @@ def main(args):
 
         print(model_output,  ",".join(str(x) for x in list(eval_results.values())))
 
-            if "pata" in total_path or "visogender" in total_path or "vlstereo" in total_path:
-                shots, dataset, mode_model_name, _ = total_path.split("_")
+        if "pata" in total_path or "visogender" in total_path or "vlstereo" in total_path:
+            shots, dataset, mode_model_name, _ = total_path.split("_")
 
-                index = mode_model_name.find("llava")
+            index = mode_model_name.find("llava")
 
-                mode, model = mode_model_name[:index], mode_model_name[index:]
+            mode, model = mode_model_name[:index], mode_model_name[index:]
 
-                header = ["dataset", "model", "shots", "mode"] +  list(eval_results.keys())
+            header = ["dataset", "model", "shots", "mode"] +  list(eval_results.keys())
 
-                values = [dataset, model, shots, mode] +  list(eval_results.values())
-            elif "celeba" in total_path:
-                shots, dataset, first_half_mode, second_half_mode_model_name, _ = total_path.split("_")
+            values = [dataset, model, shots, mode] +  list(eval_results.values())
+        elif "celeba" in total_path:
+            shots, dataset, first_half_mode, second_half_mode_model_name, _ = total_path.split("_")
 
-                index = second_half_mode_model_name.find("llava")
+            index = second_half_mode_model_name.find("llava")
 
-                mode, model = second_half_mode_model_name[:index], second_half_mode_model_name[index:]
+            mode, model = second_half_mode_model_name[:index], second_half_mode_model_name[index:]
 
-                header = ["dataset", "model", "shots", "mode"] +  list(eval_results.keys())
+            header = ["dataset", "model", "shots", "mode"] +  list(eval_results.keys())
 
-                values = [dataset, model, shots, first_half_mode+mode] +  list(eval_results.values())
+            values = [dataset, model, shots, first_half_mode+mode] +  list(eval_results.values())
 
-            else:
-                shots, dataset, protected_category, mode_model_name, _ = total_path.split("_")
+        else:
+            shots, dataset, protected_category, mode_model_name, _ = total_path.split("_")
 
-                index = mode_model_name.find("llava")
+            index = mode_model_name.find("llava")
 
-                mode, model = mode_model_name[:index], mode_model_name[index:]
+            mode, model = mode_model_name[:index], mode_model_name[index:]
 
-                header = ["dataset", "model", "shots", "mode", "protected_category"] +  list(eval_results.keys())
+            header = ["dataset", "model", "shots", "mode", "protected_category"] +  list(eval_results.keys())
 
-                values = [dataset, model, shots, mode, protected_category] +  [str(x) for x in list(eval_results.values())]
-            
-            print(",".join(header))
-            print(",".join(str(x) for x in values))
+            values = [dataset, model, shots, mode, protected_category] +  [str(x) for x in list(eval_results.values())]
+        
+        print(",".join(header))
+        print(",".join(str(x) for x in values))
 
 
 

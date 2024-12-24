@@ -6,7 +6,6 @@ from typing import Dict
 
 from src.dataset import *
 
-
 def generate_zeroshot_dataset(dataset_name: str, input_folder: str, output_folder: str, mode: str, type_of_dataset: str, split_of_dataset: str):
     dataset_map: Dict[str, BaseDataset] = {
         "celeba": CelebA,
