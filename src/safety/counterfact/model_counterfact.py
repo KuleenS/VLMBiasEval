@@ -4,11 +4,7 @@ import os
 import json
 from tqdm import tqdm
 
-import pickle
-
-from src.safety.steering.control import ControlModel
-
-from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, AutoTokenizer
+from transformers import AutoTokenizer, AutoProcessor, AutoModelForImageTextToText
 
 import PIL
 
@@ -29,14 +25,15 @@ def eval_model(args):
 
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    processor = LlavaNextProcessor.from_pretrained(model_name)
+    if "paligemma" in model_name:
+        processor = AutoProcessor.from_pretrained(model_name)
 
-    model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+        model = AutoModelForImageTextToText.from_pretrained(model_name, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True).to("cuda")
+    
+    else:
+        processor = LlavaNextProcessor.from_pretrained(model_name)
 
-    # control_vectors_path = os.path.join(args.control_vectors_path, f"control_vectors_sycophancy_{str(args.layers)}_{args.reduction_method}.pkl")
-
-    # with open(control_vectors_path, "rb") as f:
-    #     control_vectors = pickle.load(f)
+        model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
 
     processor.tokenizer.padding_side = "left"
 
@@ -46,14 +43,6 @@ def eval_model(args):
 
     model_name_clean = args.model_path.replace("/", "-")
 
-    # for steering_vector_layer in args.layers:
-
-    #     wrapped_model = ControlModel(model, args.layers)
-
-    #     for multiplier in [-5,-2,-1, -0.5, 0, 0.5, 1, 2, 5]:
-    #         wrapped_model.reset()
-    #         wrapped_model.set_control(control_vectors, multiplier)
-    
     output_file_name = os.path.basename(question_file).split(".")[0] + f"_counterfact_{model_name_clean}_answers_visogender.json"
 
     if not os.path.exists(os.path.join(args.output_folder, output_file_name)):
@@ -112,7 +101,15 @@ def eval_model(args):
 
             for image_file, q in zip(image_files, qs):
                 try:
-                    images.append(Image.open(image_file))
+                    image = Image.open(image_file).convert('RGB')
+
+                    if "paligemma" in model_name and not args.include_image:
+                        width, height = image.size
+
+                        images.append(Image.new('RGB', (width, height)))
+                        
+                    else:
+                        images.append(image)
 
                     if model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
                         prompts.append(f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:")
@@ -120,16 +117,24 @@ def eval_model(args):
                         prompts.append(f"[INST] <image>\n{q} [/INST]")
                     elif model_name in ["llava-hf/llava-v1.6-34b-hf"]:
                         prompts.append(f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n")
+                    elif "paligemma" in model_name:
+                        prompts.append(f"<image>\n{q}")
 
                 except PIL.UnidentifiedImageError:
                     continue
             
             if len(images) != 0 and len(prompts) != 0:
-                if args.include_image:
-                    inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
-                
+                if "paligemma" in model_name:
+                    inputs = processor(text=prompts, images=images, padding=True, return_tensors="pt").to(torch.bfloat16).to(model.device)
+                    
                 else:
-                    inputs = processor(prompts, padding=True, return_tensors="pt").to("cuda:0")
+
+                    if args.include_image:
+
+                        inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
+                    
+                    else:
+                        inputs = processor(prompts, padding=True, return_tensors="pt").to("cuda:0")
 
                 with torch.inference_mode():
                     output = model.generate(**inputs,
@@ -176,10 +181,6 @@ if __name__ == "__main__":
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
     parser.add_argument("--include_image", action="store_true", default=False)
-
-    # parser.add_argument("--control_vectors_path", type=str)
-    # parser.add_argument("--layers", type=int, nargs = "+")
-    # parser.add_argument("--reduction_method", type=str)
 
     args = parser.parse_args()
 

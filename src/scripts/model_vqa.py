@@ -4,7 +4,9 @@ import os
 import json
 from tqdm import tqdm
 
-from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, AutoTokenizer
+from PIL import Image
+
+from transformers import AutoTokenizer, AutoProcessor, AutoModelForImageTextToText
 
 import PIL
 
@@ -23,9 +25,15 @@ def eval_model(args):
 
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    processor = LlavaNextProcessor.from_pretrained(model_name)
+    if "paligemma" in model_name:
+        processor = AutoProcessor.from_pretrained(model_name)
 
-    model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+        model = AutoModelForImageTextToText.from_pretrained(model_name, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True).to("cuda")
+    
+    else:
+        processor = LlavaNextProcessor.from_pretrained(model_name)
+
+        model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
 
     processor.tokenizer.padding_side = "left"
 
@@ -65,7 +73,14 @@ def eval_model(args):
 
                 for image_file, q in zip(image_files, qs):
                     try:
-                        images.append(Image.open(image_file))
+                        if "paligemma" in model_name:
+                            image = Image.open(image_file).convert('RGB')
+
+                            width, height = image.size
+
+                            images.append(Image.new('RGB', (width, height)))
+                        else:
+                            images.append(Image.open(image_file))
 
                         if model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
                             prompts.append(f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:")
@@ -73,18 +88,26 @@ def eval_model(args):
                             prompts.append(f"[INST] <image>\n{q} [/INST]")
                         elif model_name in ["llava-hf/llava-v1.6-34b-hf"]:
                             prompts.append(f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n")
+                        elif "paligemma" in model_name:
+                            prompts.append(f"<image>\n{q}")
 
                     except PIL.UnidentifiedImageError:
                         continue
                 
                 if len(images) != 0 and len(prompts) != 0:
 
-                    if args.include_image:
-
-                        inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
-                    
+                    if "paligemma" in model_name:
+                        inputs = processor(text=prompts, images=images, padding=True, return_tensors="pt").to(torch.bfloat16).to(model.device)
+                        
                     else:
-                        inputs = processor(prompts, padding=True, return_tensors="pt").to("cuda:0")
+
+                        if args.include_image:
+
+                            inputs = processor(prompts, images=images, padding=True, return_tensors="pt").to("cuda:0")
+                        
+                        else:
+                            inputs = processor(prompts, padding=True, return_tensors="pt").to("cuda:0")
+                        
 
                     with torch.inference_mode():
                         output = model.generate(**inputs,
