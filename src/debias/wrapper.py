@@ -418,9 +418,9 @@ class InterventionWrapper:
         intervention_type: str,
         model_params: dict,
         scale: Union[int, float],
-        prompt_dict: dict[str, str],
-        examples: tuple[list[str], list[Image]],
-        steering_vector_threshold_bias: float,
+        prompt_dict: dict[str, str] = None,
+        examples: tuple[list[str], list[Image]] = None,
+        steering_vector_threshold_bias: float = None,
     ) -> tuple[torch.nn.Module, Callable]:
         """Create a hook function for the specified intervention type.
 

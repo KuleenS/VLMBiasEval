@@ -17,12 +17,6 @@ from PIL import Image
 
 from src.debias.wrapper import InterventionWrapper
 
-FAIRNESS_PROMPT = {
-    "base": "",
-    "pos": "Remember to take into account both the data in the image and the text to be as fair as possible.",
-    "neg": ""
-}
-
 def process_image(q, image_file, args):
     try:
         if "paligemma" in args.model_name:
@@ -47,29 +41,6 @@ def process_image(q, image_file, args):
         return None, None 
 
     return processed_prompt, processed_image
-
-
-def sample_training_data(questions): 
-    protected_categories = set([x["protected_category"] for x in questions])
-
-    sampled_data = dict()
-
-    for x in protected_categories:
-        sampled_data[x] = []
-
-    i = 0 
-    while True:
-
-        if all(len(x) == 2 for x in sampled_data):
-            break 
-        else:
-            pc = questions[i]["protected_category"]
-
-            if len(sampled_data[pc]) != 2: 
-                sampled_data[pc].append(questions[i])
-            i += 1
-    
-    return sum([sampled_data[x] for x in sampled_data], [])
 
 
 def batch_iterable(iterable, n=1):
@@ -101,27 +72,8 @@ def eval_individual_model(model, processor, tokenizer, intervention_type: str, f
 
         model_outputs = []
 
-        sampled_data = sample_training_data(questions)
-
-        train_image_files = [x["image"] for x in sampled_data]
-
-        train_qs = [x["prompt"] for x in sampled_data]
-
-        train_images = []
-
-        train_prompts = []
-
-        for image_file, q in zip(train_image_files, train_qs):
-            processed_image, procssed_prompt = process_image(q, image_file, args)
-
-            train_images.append(processed_image)
-
-            train_prompts.append(procssed_prompt)
-
-        examples = (train_prompts, train_images)
-
         for scaling_factor in args.scaling_factors:
-            module_and_hook_fn = wrapper.get_hook(intervention_type, model_params, scaling_factor, FAIRNESS_PROMPT, examples, args.steering_vector_threshold_bias)
+            module_and_hook_fn = wrapper.get_hook(intervention_type, model_params, scaling_factor)
 
             model_name_clean = args.model_name.replace("/", "-")
             
@@ -208,8 +160,7 @@ if  __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--include_image", action="store_true", default=False)
     parser.add_argument("--scaling_factors", nargs="+", type=float, default=[ -2, -3, -4, -5, -6, -7, -8, -10, -20, -40])
-    parser.add_argument("--interventions", nargs="+", type=str, default=["constant_sae","constant_steering_vector","conditional_per_input","conditional_per_token","conditional_steering_vector","clamping","conditional_clamping","probe_steering_vector","probe_sae","probe_sae_clamping","probe_steering_vector_clamping","sae_steering_vector"])
-    parser.add_argument("--steering_threshold_bias", type=float)
+    parser.add_argument("--interventions", nargs="+", type=str, default=["constant_sae", "conditional_per_input","conditional_per_token","clamping","conditional_clamping"])
     parser.add_argument("--feature_idxs", nargs="+", type=int)
 
     args = parser.parse_args()
