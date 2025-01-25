@@ -1,7 +1,7 @@
 # VLMBiasEval
 
 ## Description
-"VLMBiasEval" is a research project exploring the fairness and bias of Visual Language Models (VLLMs) like LLaVa.
+"VLMBiasEval" is a research project exploring the fairness and bias of Visual Language Models (VLLMs) like LLaVa and ways to debiasing them using SAE based methods
 
 ## Installation
 Clone the repository to your local machine:
@@ -22,9 +22,6 @@ To run any script
 python -m src.scripts.<script_name> <args>
 ```
 
-### convert_dicom.py
-Converts dicom from VinDR to JPG
-
 ### evaluate.py
 Runs evaluation of output
 
@@ -40,9 +37,6 @@ However, it does have older versioning of some packages so please be mindful of 
 ### model_vqa.py
 Evaluate VQA model
 
-### model_med_vqa.py
-Evaluate LLaVa-Med Model (you need to install LLaVa Med Repo before https://github.com/microsoft/LLaVA-Med)
-
 ### model_adversarial.py
 Evaluate VQA model on adversarial VisoGender 
 
@@ -53,6 +47,7 @@ Evaluate gemini
 - **LLaVa**: Set of LLaVa 1.6 models from 7B to 34B from llava-hf
 - **CLIP**: CLIP Large 224 and CLIP Large 336
 - **Gemini**: Gemini Flash 001 
+- **PaliGemma**
 
 ### General Datasets
 1. **VisoGender**
@@ -76,12 +71,6 @@ Evaluate gemini
    - **Task**: Predict "blond hair" or "heavy makeup" as the target, with gender as the sensitive category.
    - **Original Article**: [CelebA](https://arxiv.org/pdf/1411.7766.pdf), [Gender Parity in CelebA](https://arxiv.org/pdf/2206.10843.pdf)
 
-### Medical Datasets
-6. **Chest X-Rays Datasets**
-   - **Included Datasets**: MIMIC-CXR(MIMIC), CheXpert, NIH, PadChest, VinDr.
-   - **Task**: Zero-Shot Diagnosis. Given a chest X-ray and a prompt, predict findings. Protected attributes may include age, demographic, income, etc.
-   - **Original Article**: [Chest X-Rays](https://arxiv.org/ftp/arxiv/papers/2402/2402.14815.pdf)
-
 ## Evaluation
 Evaluate the models based on:
 - Performance metrics: F1, Precision, Recall, Accuracy.
@@ -89,11 +78,3 @@ Evaluate the models based on:
 
 ## Contributing
 Contributions to "VLMBiasEval" are welcome. Please submit a pull request or open an issue to discuss potential changes or additions.
-
-## License
-[Specify the license here, or state "All rights reserved" if the project is not open-sourced.]
-
-## Related Works
-- [Related work 1](https://arxiv.org/pdf/2402.02207.pdf)
-- [Related work 2](https://arxiv.org/pdf/2303.10431.pdf)
-- [Related work 3](https://arxiv.org/pdf/2303.12734.pdf)
