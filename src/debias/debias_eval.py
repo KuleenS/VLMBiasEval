@@ -1,5 +1,8 @@
 import argparse
-from typing import List
+
+import csv
+
+from typing import Dict, Type, Any, List
 
 import os
 
@@ -17,30 +20,22 @@ from PIL import Image
 
 from src.debias.wrapper import InterventionWrapper
 
-def process_image(q, image_file, args):
+from src.eval import VisoGenderEval
+
+def evaluate_output(data: List[Dict[str, Any]], dataset: str):
+
+    evaluator = VisoGenderEval()
+
+    return evaluator.evaluate_direct(data, mode=dataset)
+
+def process_image(image_file):
     try:
-        if "paligemma" in args.model_name:
-            image = Image.open(image_file).convert('RGB')
-
-            width, height = image.size
-
-            processed_image = Image.new('RGB', (width, height))
-        else:
-           processed_image = Image.open(image_file)
-
-        if args.model_name in ["llava-hf/llava-v1.6-vicuna-7b-hf", "llava-hf/llava-v1.6-vicuna-13b-hf"]:
-            processed_prompt = f"A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions. USER: <image>\n{q} ASSISTANT:"
-        elif args.model_name in ["llava-hf/llava-v1.6-mistral-7b-hf"]:
-            processed_prompt =  f"[INST] <image>\n{q} [/INST]"
-        elif args.model_name in ["llava-hf/llava-v1.6-34b-hf"]:
-            processed_prompt = f"<|im_start|>system\nAnswer the questions.<|im_end|><|im_start|>user\n<image>\n{q}<|im_end|><|im_start|>assistant\n"
-        elif "paligemma" in args.model_name:
-            processed_prompt = f"<image>\n{q}"
+        processed_image = Image.open(image_file).convert('RGB')
 
     except PIL.UnidentifiedImageError:
-        return None, None 
+        return None 
 
-    return processed_prompt, processed_image
+    return processed_image
 
 
 def batch_iterable(iterable, n=1):
@@ -48,17 +43,17 @@ def batch_iterable(iterable, n=1):
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)]
 
-def eval_individual_model(model, processor, tokenizer, intervention_type: str, feature_idx: int, args):
-    wrapper = InterventionWrapper(model, processor, args.include_image, device="cuda:0")
+def eval_individual_model(model, processor, tokenizer, intervention_type: str, sae_release: str, sae_id: str, sae_layer: str, feature_idx: int, args, writer):
+    wrapper = InterventionWrapper(model, processor, args.model_name, args.include_image, device="cuda:0")
 
-    wrapper.load_sae(release=args.sae_release, sae_id=args.sae_id, layer_idx=args.sae_layer)
+    wrapper.load_sae(release=sae_release, sae_id=sae_id, layer_idx=sae_layer)
 
     question_files = [os.path.join(args.question_folder, x) for x in os.listdir(args.question_folder)]
 
     model_params =  {
-        "sae_release": args.sae_release,
-        "sae_id": args.sae_id,
-        "targ_layer": args.sae_layer,
+        "sae_release": sae_release,
+        "sae_id": sae_id,
+        "targ_layer": sae_layer,
         "feature_idx": feature_idx,
     }
 
@@ -76,27 +71,26 @@ def eval_individual_model(model, processor, tokenizer, intervention_type: str, f
             module_and_hook_fn = wrapper.get_hook(intervention_type, model_params, scaling_factor)
 
             model_name_clean = args.model_name.replace("/", "-")
-            
-            output_file_name = os.path.basename(question_file).split(".")[0] + f"{model_name_clean}_{scaling_factor}_answers.json"
+
+            sae_release_clean = sae_release.replace("/", "-")
+
+            sae_id_clean = sae_id.replace("/", "-")
+        
+            output_file_name = os.path.basename(question_file).split(".")[0] + f"_{model_name_clean}_scaling_factor_{scaling_factor}_intervention_{intervention_type}_feature_idx_{feature_idx}_sae_layer_{sae_layer}_sae_id_{sae_id_clean}_sae_release_{sae_release_clean}_answers.json"
 
             if not os.path.exists(os.path.join(args.output_folder, output_file_name)):
-                questions_batched = batch_iterable(questions, args.batch_size)
-
-                for batch in tqdm(questions_batched):
-                    image_files = [x["image"] for x in batch]
-
-                    qs = [x["prompt"] for x in batch]
+                for item in tqdm(questions):
 
                     images = []
 
                     prompts = []
 
-                    for image_file, q in zip(image_files, qs):
-                        processed_image, procssed_prompt = process_image(q, image_file, args)
+                    processed_image = process_image(item["image"])
 
+                    if item['prompt'] is not None and processed_image is not None:
                         images.append(processed_image)
 
-                        prompts.append(procssed_prompt)
+                        prompts.append(f"<image>\n{item['prompt']}")
                     
                     if len(images) != 0 and len(prompts) != 0:
                         g = wrapper.generate(prompts, images, module_and_hook_fn)
@@ -109,37 +103,39 @@ def eval_individual_model(model, processor, tokenizer, intervention_type: str, f
 
                             preds.append(pred)
                         
-                        for line, prompt, pred in zip(batch, prompts, preds):
-                            line["prompt"] = prompt
+                        item["model_id"] = args.model_name
 
-                            line["model_id"] = args.model_name
+                        item["output"] = output_labels[pred]
 
-                            line["output"] = output_labels[pred]
-
-                            model_outputs.append(line)
+                        model_outputs.append(item)
                 
-                model_name_clean = args.model_path.replace("/", "-")
-            
-                output_file_name = os.path.basename(question_file).split(".")[0] + f"{model_name_clean}_scaling_factor_{scaling_factor}_intervention_{intervention_type}_feature_idx_{args.feature_idx}_answers.json"
-
                 with open(os.path.join(args.output_folder, output_file_name), "w") as f:
                     json.dump(model_outputs, f)
 
+                if "OO" in question_file:
+                    eval_output = evaluate_output(model_outputs, "OO")
+                else:
+                    eval_output = evaluate_output(model_outputs, "OP")
+                
+                sorted_keys = sorted(eval_output.keys())
+                
+                sorted_dict = {key: eval_output[key] for key in sorted_keys}
+
+                row = [args.model_name, sae_release, sae_id, sae_layer, feature_idx, intervention_type, scaling_factor] + list(sorted_dict.values())
+
+                writer.writerow(row)
+                
+
+        
 
 def eval_model(args):
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
 
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    if "paligemma" in args.model_name:
-        processor = AutoProcessor.from_pretrained(args.model_name)
+    processor = AutoProcessor.from_pretrained(args.model_name)
 
-        model = AutoModelForImageTextToText.from_pretrained(args.model_name, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True).to("cuda")
-    
-    else:
-        processor = AutoProcessor.from_pretrained(args.model_name)
-
-        model = AutoModelForImageTextToText.from_pretrained(args.model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+    model = AutoModelForImageTextToText.from_pretrained(args.model_name, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True).to("cuda")
     
     processor.tokenizer.padding_side = "left"
 
@@ -147,9 +143,16 @@ def eval_model(args):
 
     model.eval()
 
-    for intervention in args.interventions: 
-        for feature_idx in args.feature_idxs: 
-            eval_individual_model(model, processor, tokenizer, intervention, feature_idx, args)
+    with open(os.path.join(args.output_folder, "results.csv"), "w") as f:
+        writer = csv.writer(f)
+
+        header = ["model", "sae_release", "sae_id", "sae_layer", "feature_idx", "intervention", "scale"]
+
+        writer.writerow(header)
+
+        for sae_release, sae_id, sae_layer, feature_idx in zip(args.sae_releases, args.sae_ids, args.sae_layers, args.feature_idxs): 
+            for intervention in args.interventions: 
+                eval_individual_model(model, processor, tokenizer, intervention, sae_release, sae_id, sae_layer, feature_idx, args, writer)
 
 
 if  __name__ == "__main__":
@@ -159,9 +162,13 @@ if  __name__ == "__main__":
     parser.add_argument("--output_folder", type=str)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--include_image", action="store_true", default=False)
-    parser.add_argument("--scaling_factors", nargs="+", type=float, default=[ -2, -3, -4, -5, -6, -7, -8, -10, -20, -40])
-    parser.add_argument("--interventions", nargs="+", type=str, default=["constant_sae", "conditional_per_input","conditional_per_token","clamping","conditional_clamping"])
+    parser.add_argument("--sae_releases", nargs="+", type=str)
+    parser.add_argument("--sae_ids", nargs="+", type=str)
+    parser.add_argument("--sae_layers", nargs="+", type=int)
     parser.add_argument("--feature_idxs", nargs="+", type=int)
+    parser.add_argument("--scaling_factors", nargs="+", type=float, default=[ 2, 3, 4, 5, 6, 7, 8, 10, 20, 40])
+    parser.add_argument("--interventions", nargs="+", type=str, default=["constant_sae", "conditional_per_input","conditional_per_token","clamping","conditional_clamping"])
+    
 
     args = parser.parse_args()
 
