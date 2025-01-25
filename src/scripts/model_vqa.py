@@ -25,15 +25,9 @@ def eval_model(args):
 
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    if "paligemma" in model_name:
-        processor = AutoProcessor.from_pretrained(model_name)
+    processor = AutoProcessor.from_pretrained(model_name)
 
-        model = AutoModelForImageTextToText.from_pretrained(model_name, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True).to("cuda")
-    
-    else:
-        processor = LlavaNextProcessor.from_pretrained(model_name)
-
-        model = LlavaNextForConditionalGeneration.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to("cuda")
+    model = AutoModelForImageTextToText.from_pretrained(model_name, low_cpu_mem_usage=True).to("cuda")
 
     processor.tokenizer.padding_side = "left"
 
@@ -73,12 +67,15 @@ def eval_model(args):
 
                 for image_file, q in zip(image_files, qs):
                     try:
-                        if "paligemma" in model_name and not args.include_image:
+                        if "paligemma" in model_name :
                             image = Image.open(image_file).convert('RGB')
 
-                            width, height = image.size
+                            if not args.include_image:
+                                width, height = image.size
 
-                            images.append(Image.new('RGB', (width, height)))
+                                images.append(Image.new('RGB', (width, height)))
+                            else:
+                                images.append(image)
                         else:
                             images.append(Image.open(image_file))
 
