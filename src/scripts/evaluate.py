@@ -10,13 +10,7 @@ from src.eval import *
 def evaluate_output(input_file: str):
     evaluator_map: Dict[str, Type[BaseEvaluateDataset]] = {
         "celeba": CelebAEval,
-        "chexpert": CheXpertEval,
-        "mimic": MIMICEval,
-        "nih": NIHCXREval,
-        "padchest": PadChestEval,
-        "pata": PATAEval,
         "utkface": UTKFaceEval,
-        "vindr": VinDREval,
         "visogender": VisoGenderEval,
         "vlstereo": VLStereoEval,
     }
