@@ -15,6 +15,9 @@ class BaseEvaluateDataset(ABC):
 
     def evaluate(self, path: str) -> Dict[str, float]:
         pass
+
+    def evaluate_direct(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
+        pass
     
     def evaluate_dataset_binary(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         result = dict()
@@ -50,6 +53,3 @@ class BaseEvaluateDataset(ABC):
         result["f1-no"] = f1[0]
 
         return result
-
-    def evaluate_dataset_multiple_choice(self: List[Dict[str, Any]]) -> Dict[str, float]:
-        pass

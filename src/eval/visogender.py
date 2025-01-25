@@ -102,3 +102,10 @@ class VisoGenderEval(BaseEvaluateDataset):
             return self.evaluate_op(data)
         else:
             return self.evaluate_oo(data)
+    
+    def evaluate_direct(self, data: List[Dict[str, str]], mode: str) -> Dict[str, float]:
+        if "OP" == mode:
+            return self.evaluate_op(data)
+        else:
+            return self.evaluate_oo(data)
+        
