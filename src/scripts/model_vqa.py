@@ -73,7 +73,7 @@ def eval_model(args):
 
                 for image_file, q in zip(image_files, qs):
                     try:
-                        if "paligemma" in model_name:
+                        if "paligemma" in model_name and not args.include_image:
                             image = Image.open(image_file).convert('RGB')
 
                             width, height = image.size
