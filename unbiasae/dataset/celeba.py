@@ -8,7 +8,7 @@ from typing import List
 import pandas as pd
 import numpy as np
 
-from src.dataset.base_dataset import BaseDataset
+from unbiasae.dataset.base_dataset import BaseDataset
 
 class CelebA(BaseDataset):
 

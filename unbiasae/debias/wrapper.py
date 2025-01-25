@@ -9,9 +9,9 @@ import contextlib
 
 from PIL.Image import Image
 
-from src.debias.eval_config import EvalConfig, InterventionType
-import src.debias.caa as caa
-from src.debias.sae.sae import Sae
+from unbiasae.debias.eval_config import EvalConfig, InterventionType
+import unbiasae.debias.caa as caa
+from unbiasae.debias.sae.sae import Sae
 
 try:
     import flash_attn

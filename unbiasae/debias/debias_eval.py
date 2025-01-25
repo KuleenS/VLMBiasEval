@@ -18,9 +18,9 @@ import PIL
 
 from PIL import Image
 
-from src.debias.wrapper import InterventionWrapper
+from unbiasae.debias.wrapper import InterventionWrapper
 
-from src.eval import VisoGenderEval
+from unbiasae.eval import VisoGenderEval
 
 def evaluate_output(data: List[Dict[str, Any]], dataset: str):
 

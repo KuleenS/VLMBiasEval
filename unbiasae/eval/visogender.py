@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from src.eval.base_evaluate_dataset import BaseEvaluateDataset
+from unbiasae.eval.base_evaluate_dataset import BaseEvaluateDataset
 
 class VisoGenderEval(BaseEvaluateDataset):
 

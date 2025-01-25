@@ -5,7 +5,7 @@ from typing import Dict, List, Any
 from fairlearn.metrics import demographic_parity_difference, demographic_parity_ratio
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-from src.eval.base_evaluate_dataset import BaseEvaluateDataset
+from unbiasae.eval.base_evaluate_dataset import BaseEvaluateDataset
 
 class UTKFaceEval(BaseEvaluateDataset):
 

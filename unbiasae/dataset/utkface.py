@@ -8,7 +8,7 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 
-from src.dataset.base_dataset import BaseDataset
+from unbiasae.dataset.base_dataset import BaseDataset
 
 class UTKFace(BaseDataset):
 

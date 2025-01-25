@@ -10,7 +10,7 @@ import random
 from multiprocessing import Process, Manager
 
 
-from src.debias.eval_config import EvalConfig
+from unbiasae.debias.eval_config import EvalConfig
 
 def get_model_params(model_name: str) -> dict[str, str | int]:
     """Get model-specific parameters for interventions.

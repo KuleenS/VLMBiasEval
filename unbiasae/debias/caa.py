@@ -6,8 +6,8 @@ import einops
 from pathlib import Path
 from dataclasses import dataclass
 from tqdm import tqdm
-import src.debias.utils as utils
-from src.debias.eval_config import EvalConfig
+import unbiasae.debias.utils as utils
+from unbiasae.debias.eval_config import EvalConfig
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
