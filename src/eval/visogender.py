@@ -9,7 +9,7 @@ from src.eval.evaluate_dataset import BaseEvaluateDataset
 class VisoGenderEval(BaseEvaluateDataset):
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(header = ["dataset", "model", "shots", "mode"])
     
     def get_scores(self, df: pd.DataFrame) -> Dict[str, float]:
         correct = df[["label", "specialisation", "correct"]].groupby(["specialisation", "label"])["correct"].agg("sum").reset_index()
@@ -93,17 +93,8 @@ class VisoGenderEval(BaseEvaluateDataset):
         total_results["overall"] = overall_accuracy
         
         return total_results
-
-    def evaluate(self, path: str) -> Dict[str, float]:
-        with open(path) as f:
-            data = json.load(f)
-        
-        if "OP" in path:
-            return self.evaluate_op(data)
-        else:
-            return self.evaluate_oo(data)
     
-    def evaluate_direct(self, data: List[Dict[str, str]], mode: str) -> Dict[str, float]:
+    def evaluate(self, data: List[Dict[str, str]], mode: str) -> Dict[str, float]:
         if "OP" == mode:
             return self.evaluate_op(data)
         else:

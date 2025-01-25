@@ -1,5 +1,3 @@
-import json
-
 from typing import Dict, List, Any
 
 from src.eval.evaluate_dataset import BaseEvaluateDataset
@@ -7,16 +5,13 @@ from src.eval.evaluate_dataset import BaseEvaluateDataset
 class PATAEval(BaseEvaluateDataset):
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(header=["dataset", "model", "shots", "mode"])
 
         self.label_map = {"yes": 1, "no": 0}
 
         self.outputs = ["A", "B", "C", "D", "E", "F", "G", "H"]
     
-    def evaluate(self, path: str) -> Dict[str, float]:
-        with open(path) as f:
-            data = json.load(f)
-
+    def evaluate(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         labels = [x["label"] for x in data]
 
         outputs = [x["output"] for x in data]

@@ -1,23 +1,19 @@
 import json
 
-from typing import Dict
+from typing import Dict, List, Any
 
 from src.eval.evaluate_dataset import BaseEvaluateDataset
 
 class MIMICEval(BaseEvaluateDataset):
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(header=["dataset", "model", "shots", "mode", "protected_category"])
 
         self.label_map = {"yes": 1, "no": 0}
 
         self.outputs = ["Yes", "No"]
     
-    def evaluate(self, path: str) -> Dict[str, float]:
-
-        with open(path) as f:
-            data = json.load(f)
-
+    def evaluate(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         label_map_inverse = {1 : "yes", 0: "no"}
 
         for i in range(len(data)):

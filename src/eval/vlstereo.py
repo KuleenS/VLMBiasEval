@@ -1,6 +1,4 @@
-import json
-
-from typing import Dict
+from typing import Dict, List
 
 import pandas as pd
 
@@ -9,15 +7,11 @@ from src.eval.evaluate_dataset import BaseEvaluateDataset
 class VLStereoEval(BaseEvaluateDataset):
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(header = ["dataset", "model", "shots", "mode"])
 
         self.outputs = ["Yes", "No"]
 
-    def evaluate(self, path) -> Dict[str, float]:
-
-        with open(path) as f:
-            data = json.load(f)
-        
+    def evaluate(self, data: List[Dict[str, str]]) -> Dict[str, float]:
         df = pd.DataFrame(data)
 
         anti_stereotype = df[df.label == "B"]

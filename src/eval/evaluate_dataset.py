@@ -8,17 +8,16 @@ from fairlearn.metrics import demographic_parity_difference, demographic_parity_
 
 class BaseEvaluateDataset(ABC):
 
-    def __init__(self) -> None:
+    def __init__(self, header: List[str]) -> None:
         super().__init__()
 
         self.label_map = {"yes": 1, "no": 0}
 
-    def evaluate(self, path: str) -> Dict[str, float]:
+        self.header = header
+
+    def evaluate(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         pass
 
-    def evaluate_direct(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
-        pass
-    
     def evaluate_dataset_binary(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         result = dict()
 
