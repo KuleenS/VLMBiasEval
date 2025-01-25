@@ -194,15 +194,9 @@ def eval_model(args):
                         with open(os.path.join(args.output_folder, output_file_name), "w") as f:
                             json.dump(model_outputs, f)
 
-        # model_name_clean = args.model_path.replace("/", "-")
-        # output_file_name = f"{model_name_clean}_answers.json"
-
-        # with open(os.path.join(args.output_folder, output_file_name), "w") as f:
-        #     json.dump(model_outputs, f)
 
     except Exception as e:
         print(f"Error in eval_model function: {e}")
-        # Handle other unexpected errors
         return 'Error'
 
 
