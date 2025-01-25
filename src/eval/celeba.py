@@ -1,6 +1,6 @@
 from typing import Dict, Any,List
 
-from src.eval.evaluate_dataset import BaseEvaluateDataset
+from src.eval.base_evaluate_dataset import BaseEvaluateDataset
 
 class CelebAEval(BaseEvaluateDataset):
 

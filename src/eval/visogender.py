@@ -1,10 +1,8 @@
-import json
-
 from typing import Dict, List
 
 import pandas as pd
 
-from src.eval.evaluate_dataset import BaseEvaluateDataset
+from src.eval.base_evaluate_dataset import BaseEvaluateDataset
 
 class VisoGenderEval(BaseEvaluateDataset):
 
