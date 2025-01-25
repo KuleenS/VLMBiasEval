@@ -76,10 +76,7 @@ def get_activation_addition_output_hook(
             vector = vector.to(resid_BLD.device)
             resid_BLD = resid_BLD + coeff * vector
 
-        if rest:
-            return (resid_BLD, *rest)
-        else:
-            return resid_BLD
+        return (resid_BLD,)
 
     return hook_fn
 
@@ -136,10 +133,7 @@ def get_conditional_per_input_hook(
 
             resid_BLD += decoder_BLD * intervention_threshold_B11
 
-        if rest:
-            return (resid_BLD, *rest)
-        else:
-            return resid_BLD
+        return (resid_BLD,)
 
     return hook_fn
 
@@ -197,10 +191,7 @@ def get_conditional_per_token_hook(
                 resid_BLD,
             )
 
-        if rest:
-            return (resid_BLD, *rest)
-        else:
-            return resid_BLD
+        return (resid_BLD,)
 
     return hook_fn
 
@@ -249,10 +240,7 @@ def get_clamping_hook(
                 resid_BLD,
             )
 
-        if rest:
-            return (resid_BLD, *rest)
-        else:
-            return resid_BLD
+        return (resid_BLD,)
 
     return hook_fn
 
@@ -314,10 +302,7 @@ def get_conditional_clamping_hook(
                 resid_BLD,
             )
 
-        if rest:
-            return (resid_BLD, *rest)
-        else:
-            return resid_BLD
+        return (resid_BLD,)
 
     return hook_fn
 
@@ -386,8 +371,10 @@ class InterventionWrapper:
         Note:
             Prompts must contain the model's BOS token
         """
+        print(batched_images, batched_prompts)
+
         inputs = self.processor(
-            batched_prompts, images=batched_images, add_padding=True, add_special_tokens=False, return_tensors="pt"
+            images=batched_images, text=batched_prompts, return_tensors="pt"
         ).to(self.device)
 
         if module_and_hook_fn:
