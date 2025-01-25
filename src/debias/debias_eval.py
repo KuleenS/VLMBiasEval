@@ -26,7 +26,7 @@ def evaluate_output(data: List[Dict[str, Any]], dataset: str):
 
     evaluator = VisoGenderEval()
 
-    return evaluator.evaluate_direct(data, mode=dataset)
+    return evaluator.evaluate(data, mode=dataset)
 
 def process_image(image_file):
     try:
@@ -124,8 +124,6 @@ def eval_individual_model(model, processor, tokenizer, intervention_type: str, s
                 row = [args.model_name, sae_release, sae_id, sae_layer, feature_idx, intervention_type, scaling_factor] + list(sorted_dict.values())
 
                 writer.writerow(row)
-                
-
         
 
 def eval_model(args):
