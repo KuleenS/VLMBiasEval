@@ -1,12 +1,12 @@
 import os
 
-import json
+from pathlib import Path
 
 import pickle
 
 import requests
 
-from typing import List
+from typing import List, Dict
 
 from tqdm import tqdm
 
@@ -16,8 +16,8 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class VisoGender(BaseDataset):
 
-    def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
-        super().__init__(input_folder, output_folder)
+    def __init__(self, input_folder: Path, mode: str) -> None:
+        super().__init__(input_folder)
 
         if mode not in ["OP", "OO"]:
             raise ValueError()
@@ -30,12 +30,12 @@ class VisoGender(BaseDataset):
 
         self.gender_label_dict = {"masculine": "A", "feminine": "B", "neutral": "C"}
 
-        self.OP_data_filepath = "data/visogender_data/OP/OP_Visogender_11012024.tsv"
-        self.OO_data_filepath = "data/visogender_data/OO/OO_Visogender_02102023.tsv"
+        self.OP_data_filepath = Path("data/visogender_data/OP/OP_Visogender_11012024.tsv")
+        self.OO_data_filepath = Path("data/visogender_data/OO/OO_Visogender_02102023.tsv")
 
         self.clip_input_params = {
-                    "OP_data": os.path.join(input_folder, self.OP_data_filepath),
-                    "OO_data": os.path.join(input_folder, self.OO_data_filepath),
+                    "OP_data": self.input_folder / self.OP_data_filepath,
+                    "OO_data": self.input_folder / self.OO_data_filepath,
                     "bias_experiments": "resolution",
                     "template_type": ["occ_first", "par_first"],
                     "sentence_template_OP_occ_first": "The $OCCUPATION and $POSS_PRONOUN $PARTICIPANT",
@@ -44,12 +44,12 @@ class VisoGender(BaseDataset):
                     "gender_idx_dict" : self.gender_idx_dict
         }
 
-        self.annotations = self.generate_annotations(self.mode)
+        self.annotations = self._generate_annotations(self.mode)
 
-        if not os.path.exists(os.path.join(self.input_folder, "images", self.text_mode)):
-            url_to_path_dict = self.download_image_data(self.input_folder, list(self.annotations["url"]))
+        if not (self.input_folder /  "images"/  self.text_mode).exists():
+            url_to_path_dict = self._download_image_data(self.input_folder, list(self.annotations["url"]))
         else:
-            with open(os.path.join(self.input_folder, f"url_to_path_map_{self.text_mode}.pickle"), "rb") as f:
+            with open(self.input_folder /  f"url_to_path_map_{self.text_mode}.pickle", "rb") as f:
                 url_to_path_dict = pickle.load(f)
         
         self.annotations["path"] = self.annotations["url"].map(url_to_path_dict)
@@ -62,14 +62,14 @@ class VisoGender(BaseDataset):
 
         self.outputs = ["A", "B"]
 
-    def download_image_data(self, input_folder: str, urls: List[str]):
+    def _download_image_data(self, input_folder: Path, urls: List[str]):
         image_paths = []
 
-        os.makedirs(os.path.join(input_folder, "images", self.text_mode), exist_ok=True)
+        os.makedirs(input_folder / "images"/  self.text_mode, exist_ok=True)
 
         for i, image_url in tqdm(enumerate(urls)):
 
-            image_path = os.path.join(input_folder, "images", self.text_mode, f"{i}.jpg")
+            image_path = input_folder / "images"/  self.text_mode/  f"{i}.jpg"
 
             try:
                 r = requests.get(image_url, timeout=15) # 10 seconds
@@ -91,13 +91,13 @@ class VisoGender(BaseDataset):
         
         url_to_path_dict = dict(image_paths)
 
-        with open(os.path.join(input_folder, f"url_to_path_map_{self.text_mode}.pickle"), "wb") as f:
+        with open(input_folder /  f"url_to_path_map_{self.text_mode}.pickle", "wb") as f:
             pickle.dump(url_to_path_dict, f)
         
         return url_to_path_dict
 
     
-    def load_visogender_data(self, input_params_dict: dict, context_OP: bool):
+    def _load_visogender_data(self, input_params_dict: dict, context_OP: bool):
         """
         Returns the metadata required for setting up the data and templates for the occ-par an occ-obj contexts
 
@@ -113,7 +113,7 @@ class VisoGender(BaseDataset):
         else:
             return input_params_dict["OO_data"], input_params_dict["sentence_template_OO"], None
     
-    def load_metadata_to_dict(self, filepath: str, context: str):
+    def _load_metadata_to_dict(self, filepath: str, context: str):
         """
         Opens a file, creates a dictionary of dictionaries with IDX as key, 
         and metadata as values.
@@ -175,7 +175,7 @@ class VisoGender(BaseDataset):
             
         return op_idx_metadata_dict, oo_idx_metadata_dict
     
-    def occupation_template_sentences_all_pronouns(self, occupation: str, template_sentence:str, other_participant:str=None, other_object:str=None, model_domain: str="CLIP", context_op:bool=False)-> tuple:
+    def _occupation_template_sentences_all_pronouns(self, occupation: str, template_sentence:str, other_participant:str=None, other_object:str=None, model_domain: str="CLIP", context_op:bool=False)-> tuple:
         """
         Creates three sentences, based off either an occupation (if CLIP: and participant), or occupation If CLIP:and object)
         
@@ -225,7 +225,7 @@ class VisoGender(BaseDataset):
     
         return male_sentence, female_sentence, neutral_sentence
 
-    def participant_template_sentences_all_pronouns(self, other_participant:str, template_sentence:str)-> tuple:
+    def _participant_template_sentences_all_pronouns(self, other_participant:str, template_sentence:str)-> tuple:
         """
         Creates three sentences, with the template reversed - only the participant - occupation is considered in this case
         If CLIP: "A $PARTICIPANT and $PRONOUN $OCCUPATION"
@@ -263,14 +263,14 @@ class VisoGender(BaseDataset):
 
         return male_sentence, female_sentence, neutral_sentence
     
-    def generate_annotations(self, context_OP: bool):
+    def _generate_annotations(self, context_OP: bool):
         if context_OP:
-            sentence_path, template_occ_first, template_par_first = self.load_visogender_data(self.clip_input_params, context_OP)
-            metadata_dict = self.load_metadata_to_dict(sentence_path, "OP")
+            sentence_path, template_occ_first, template_par_first = self._load_visogender_data(self.clip_input_params, context_OP)
+            metadata_dict = self._load_metadata_to_dict(sentence_path, "OP")
             template_type_list = self.clip_input_params["template_type"]
         else:
-            sentence_path, template_sentence_obj, _ = self.load_visogender_data(self.clip_input_params, context_OP)
-            metadata_dict = self.load_metadata_to_dict(sentence_path, "OO")
+            sentence_path, template_sentence_obj, _ = self._load_visogender_data(self.clip_input_params, context_OP)
+            metadata_dict = self._load_metadata_to_dict(sentence_path, "OO")
             template_type_list = [self.clip_input_params["template_type"][0]]
 
         other_obj = None
@@ -300,19 +300,19 @@ class VisoGender(BaseDataset):
                         other_participant = IDX_dict[metadata_key]["par"]
                         if template_type == "occ_first":
                             sentence_template = template_occ_first
-                            male_sent, female_sent, neutral_sent = self.occupation_template_sentences_all_pronouns(
+                            male_sent, female_sent, neutral_sent = self._occupation_template_sentences_all_pronouns(
                                 occupation=occupation, template_sentence=sentence_template, other_participant=other_participant, other_object=other_obj, context_op=context_OP)
                         
                         elif template_type == "par_first":
                             sentence_template = template_par_first
-                            male_sent, female_sent, neutral_sent = self.occupation_template_sentences_all_pronouns(
+                            male_sent, female_sent, neutral_sent = self._occupation_template_sentences_all_pronouns(
                                 occupation=occupation, template_sentence=sentence_template, other_participant=other_participant, other_object=other_obj, context_op=context_OP)
                     
                     else:
                         other_obj = IDX_dict[metadata_key]["obj"]
                         if template_type == "occ_first":
                             sentence_template = template_sentence_obj
-                            male_sent, female_sent, neutral_sent = self.occupation_template_sentences_all_pronouns(
+                            male_sent, female_sent, neutral_sent = self._occupation_template_sentences_all_pronouns(
                                 occupation=occupation, template_sentence=sentence_template, other_participant=other_participant, other_object=other_obj, context_op=context_OP)
                             
                         elif template_type == "par_first":
@@ -336,7 +336,7 @@ class VisoGender(BaseDataset):
                 
             return pd.DataFrame(outputs)
 
-    def generate_dataset_dict(self, model: str):
+    def _generate_dataset_dict(self, model: str) -> Dict[str, Dict[str, str] | List]:
 
         label = list(self.annotations["label"])
 
@@ -372,20 +372,14 @@ class VisoGender(BaseDataset):
 
         return final_data
     
-    def create_train_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
         raise NotImplementedError()
     
-    def create_test_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="llava")
+    def create_test_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(model="llava")
 
-        with open(os.path.join(self.output_folder, f"zeroshot_test_visogender_{self.text_mode}.json"), "w") as f:
-            json.dump(final_data, f)
-
-    def create_train_clip_dataset(self) -> None:
+    def create_train_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
        raise NotImplementedError()
         
-    def create_test_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="clip")
-
-        with open(os.path.join(self.output_folder, f"clipzeroshot_test_visogender_{self.text_mode}.json"), "w") as f:
-            json.dump(final_data, f)
+    def create_test_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(model="clip")
