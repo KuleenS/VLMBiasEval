@@ -1,15 +1,13 @@
-import os 
+from pathlib import Path
 
-import json
+from typing import Any, Dict, List
 
-from typing import Any, Dict
-
-from visogender import VisoGender
+from unbiasae.dataset.visogender import VisoGender
 
 class AdversarialVisoGender(VisoGender):
 
-    def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
-        super().__init__(input_folder, output_folder, mode)
+    def __init__(self, input_folder: Path, mode: str) -> None:
+        super().__init__(input_folder, mode)
     
     def _perturb_oo(self, data: Dict[str, Any]) -> Dict[str, Any]:
         counter_factual_occ = [x["label"] for x in data["data"]]
@@ -28,7 +26,7 @@ class AdversarialVisoGender(VisoGender):
         
         return data
 
-    def _perturb_op(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _perturb_op(self, data: Dict[str, Dict[str, str] | List]) -> Dict[str, Dict[str, str] | List]:
         counter_factual_occ = [x["label"] for x in data["data"]]
         counter_factual_participant = [x["other_gender"] for x in data["data"]]
 
@@ -46,31 +44,31 @@ class AdversarialVisoGender(VisoGender):
                 finished_prompt = not_prepared_prompt.replace("image?", " image of a man helping a woman?")
             
             data["data"][i]["prompt"] = finished_prompt
+        
+        return data
     
-    def create_train_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
         raise NotImplementedError()
     
-    def create_test_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="llava")
+    def create_test_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        final_data = self._generate_dataset_dict(model="llava")
 
-        if self.mode == "OO":
+        if self.text_mode == "OO":
             final_data = self._perturb_oo(final_data)
         else:
             final_data = self._perturb_op(final_data)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_test_adv_visogender_{self.text_mode}.json"), "w") as f:
-            json.dump(final_data, f)
+        return final_data
 
-    def create_train_clip_dataset(self) -> None:
+    def create_train_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
        raise NotImplementedError()
         
-    def create_test_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="clip")
+    def create_test_clip_dataset(self) ->  Dict[str, Dict[str, str] | List]:
+        final_data = self._generate_dataset_dict(model="clip")
 
-        if self.mode == "OO":
+        if self.text_mode == "OO":
             final_data = self._perturb_oo(final_data)
         else:
             final_data = self._perturb_op(final_data)
 
-        with open(os.path.join(self.output_folder, f"clipzeroshot_test_adv_visogender_{self.text_mode}.json"), "w") as f:
-            json.dump(final_data, f)
+        return final_data
