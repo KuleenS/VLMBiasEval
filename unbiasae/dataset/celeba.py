@@ -3,7 +3,9 @@ import os
 
 import json
 
-from typing import List
+from pathlib import Path
+
+from typing import List, Dict
 
 import pandas as pd
 import numpy as np
@@ -12,8 +14,8 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class CelebA(BaseDataset):
 
-    def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
-        super().__init__(input_folder, output_folder)
+    def __init__(self, input_folder: Path, mode: str) -> None:
+        super().__init__(input_folder)
 
         self.modes = ["blond_hair", "heavy_makeup"]
 
@@ -22,9 +24,9 @@ class CelebA(BaseDataset):
 
         self.mode = mode
 
-        self.annotations = self.get_annotation(os.path.join(self.input_folder, "Anno", "list_attr_celeba.txt"))
+        self.annotations = self._get_annotation(self.input_folder / "Anno" / "list_attr_celeba.txt")
 
-        self.splits = pd.read_csv(os.path.join(self.input_folder, "Eval", "list_eval_partition.txt"), sep=" ", header=None, names=["image", "split"])
+        self.splits = pd.read_csv(self.input_folder / "Eval" / "list_eval_partition.txt", sep=" ", header=None, names=["image", "split"])
 
         if self.mode == "blond_hair":
             self.prompt = "Does the person in the photo have blond hair? Answer the question using a single word or phrase."
@@ -39,7 +41,7 @@ class CelebA(BaseDataset):
         else:
             self.clip_outputs = ["heavy makeup", "no heavy makeup"]
 
-    def get_annotation(self, input_file):
+    def _get_annotation(self, input_file: Path) -> pd.DataFrame:
         with open(input_file, "r") as f:
             texts = f.read().split("\n") 
         
@@ -63,7 +65,7 @@ class CelebA(BaseDataset):
                 df[nm] = pd.to_numeric(df[nm],downcast="integer")
         return df
     
-    def generate_dataset_dict(self, prompt: str | List[str], split: int = 2):
+    def _generate_dataset_dict(self, prompt: str | List[str], split: int = 2) -> Dict[str, Dict[str, str] | List]:
         test_items = list(self.splits[self.splits.split == split]["image"])
 
         labels_protected_category = self.annotations[self.annotations.image_id.isin(test_items)]
@@ -92,26 +94,14 @@ class CelebA(BaseDataset):
 
         return final_data
     
-    def create_train_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(self.prompt, split=0)
+    def create_train_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(self.prompt, split=0)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_train_celeba_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
-    
-    def create_test_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(self.prompt)
+    def create_test_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(self.prompt)
 
-        with open(os.path.join(self.output_folder, f"zeroshot_test_celeba_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
-
-    def create_train_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(self.clip_outputs, split=0)
+    def create_train_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(self.clip_outputs, split=0)
         
-        with open(os.path.join(self.output_folder, f"clipzeroshot_train_celeba_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
-        
-    def create_test_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(self.clip_outputs)
-        
-        with open(os.path.join(self.output_folder, f"clipzeroshot_test_celeba_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
+    def create_test_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(self.clip_outputs)
