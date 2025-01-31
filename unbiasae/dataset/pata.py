@@ -1,12 +1,14 @@
 import os
 
+from pathlib import Path
+
 import json
 
 import pickle
 
 import requests
 
-from typing import List
+from typing import List, Dict
 
 from string import ascii_uppercase
 
@@ -18,8 +20,8 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class PATA(BaseDataset):
 
-    def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
-        super().__init__(input_folder, output_folder)
+    def __init__(self, input_folder: Path, mode: str) -> None:
+        super().__init__(input_folder)
 
         if mode not in ["races", "gender", "age"]:
             raise ValueError()
@@ -32,12 +34,12 @@ class PATA(BaseDataset):
 
         self.replacements = {"doctor": "helping a patient", "pilot": "flying a plane", "soldier": "being a soldier", "singer": "singing", "photographer": "taking a picture"}
 
-        self.annotations = self.generate_annotations(self.input_folder)
+        self.annotations = self._generate_annotations(self.input_folder)
 
-        self.prompt_options, self.prompt_labels = self.generate_prompt_options_labels(self.input_folder)
+        self.prompt_options, self.prompt_labels = self._generate_prompt_options_labels(self.input_folder)
 
         if not os.path.exists(os.path.join(self.input_folder, "images")):
-            url_to_path_dict = self.download_image_data(self.input_folder, list(self.annotations["url"]))
+            url_to_path_dict = self._download_image_data(self.input_folder, list(self.annotations["url"]))
         else:
             with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "rb") as f:
                 url_to_path_dict = pickle.load(f)
@@ -48,14 +50,14 @@ class PATA(BaseDataset):
 
         self.outputs = ["A", "B", "C", "D", "E", "F", "G", "H"]
     
-    def download_image_data(self, input_folder: str, urls: List[str]):
+    def _download_image_data(self, input_folder: Path, urls: List[str]) -> Dict[str, str | None]:
         image_paths = []
 
-        os.makedirs(os.path.join(input_folder, "images"), exist_ok=True)
+        os.makedirs(input_folder / "images", exist_ok=True)
 
         for i, image_url in tqdm(enumerate(urls)):
 
-            image_path = os.path.join(input_folder, "images", f"{i}.jpg")
+            image_path = input_folder / "images" / f"{i}.jpg"
 
             try:
                 r = requests.get(image_url, timeout=15) # 10 seconds
@@ -77,13 +79,13 @@ class PATA(BaseDataset):
 
         url_to_path_dict = dict(image_paths)
 
-        with open(os.path.join(input_folder, "url_to_path_map.pickle"), "wb") as f:
+        with open(input_folder / "url_to_path_map.pickle" "wb") as f:
             pickle.dump(url_to_path_dict, f)
 
         return url_to_path_dict
     
-    def generate_annotations(self, input_folder):
-        with open(os.path.join(input_folder, "pata_fairness.files.lst")) as f:
+    def _generate_annotations(self, input_folder: Path) -> pd.DataFrame:
+        with open(input_folder / "pata_fairness.files.lst", "r") as f:
             data = [x.strip().split("|") for x in f.readlines()]
         
         metadata = [x[0].replace("gun_range", "gun range").replace("drinking_water", "drinking water").replace("fashion_show", "fashion show").split("_") for x in data]
@@ -94,8 +96,8 @@ class PATA(BaseDataset):
 
         return df
 
-    def generate_prompt_options_labels(self, input_folder):
-        with open(os.path.join(input_folder, "pata_fairness.captions.json"), "r") as f:
+    def _generate_prompt_options_labels(self, input_folder: Path):
+        with open(input_folder / "pata_fairness.captions.json", "r") as f:
             data = json.load(f)
         
         added_action = {x["short"]: x["long"][x["long"].rfind("} ") + 2:] for x in data}
@@ -124,7 +126,7 @@ class PATA(BaseDataset):
             
         return prompts, prompt_labels
 
-    def generate_dataset_dict(self, model: str):
+    def _generate_dataset_dict(self, model: str) -> Dict[str, Dict[str, str] | List]:
         list_of_tuples = []
 
         for row in self.annotations.itertuples(): 
@@ -164,20 +166,14 @@ class PATA(BaseDataset):
 
         return final_data
     
-    def create_train_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
         raise NotImplementedError()
     
-    def create_test_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="llava")
+    def create_test_llava_dataset(self)  -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(model="llava")
 
-        with open(os.path.join(self.output_folder, f"zeroshot_test_pata_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
-
-    def create_train_clip_dataset(self) -> None:
+    def create_train_clip_dataset(self)  -> Dict[str, Dict[str, str] | List]:
        raise NotImplementedError()
         
-    def create_test_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="clip")
-
-        with open(os.path.join(self.output_folder, f"clipzeroshot_test_pata_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
+    def create_test_clip_dataset(self)  -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(model="clip")
