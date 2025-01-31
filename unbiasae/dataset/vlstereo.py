@@ -1,8 +1,8 @@
 import os 
 
-import json
+from pathlib import Path
 
-from typing import List
+from typing import List, Dict
 
 import requests
 
@@ -15,8 +15,8 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class VLStereo(BaseDataset):
 
-    def __init__(self, input_folder: str, output_folder: str, mode: str) -> None:
-        super().__init__(input_folder, output_folder)
+    def __init__(self, input_folder: Path, mode: str) -> None:
+        super().__init__(input_folder)
 
         if mode not in ["race", "profession", "gender", "religion"]:
             raise ValueError()
@@ -27,12 +27,12 @@ class VLStereo(BaseDataset):
 
         self.prompt = "Answer with the option's letter from the given choices directly."
 
-        self.annotations = pd.read_csv(os.path.join(self.input_folder, "data", "VLStereoSet.csv"))
+        self.annotations = pd.read_csv(self.input_folder/ "data"/ "VLStereoSet.csv")
 
-        if not os.path.exists(os.path.join(self.input_folder, "images")):
-            url_to_path_dict = self.download_image_data(self.input_folder, list(self.annotations["Imaeg URL"]))
+        if not os.path.exists(self.input_folder/ "images"):
+            url_to_path_dict = self._download_image_data(self.input_folder, list(self.annotations["Imaeg URL"]))
         else:
-            with open(os.path.join(self.input_folder, "url_to_path_map.pickle"), "rb") as f:
+            with open(self.input_folder/  "url_to_path_map.pickle", "rb") as f:
                 url_to_path_dict = pickle.load(f)
         
         self.annotations["path"] = self.annotations["Imaeg URL"].map(url_to_path_dict)
@@ -43,14 +43,14 @@ class VLStereo(BaseDataset):
 
         self.outputs = ["A", "B", "C"]
 
-    def download_image_data(self, input_folder: str, urls: List[str]):
+    def _download_image_data(self, input_folder: Path, urls: List[str]):
         image_paths = []
 
-        os.makedirs(os.path.join(input_folder, "images"), exist_ok=True)
+        os.makedirs(input_folder /"images", exist_ok=True)
 
         for i, image_url in tqdm(enumerate(urls)):
 
-            image_path = os.path.join(input_folder, "images", f"{i}.jpg")
+            image_path = input_folder /  "images"/  f"{i}.jpg"
 
             try:
                 with requests.get(image_url, timeout=15) as r:
@@ -72,12 +72,12 @@ class VLStereo(BaseDataset):
         
         url_to_path_dict = dict(image_paths)
 
-        with open(os.path.join(input_folder, "url_to_path_map.pickle"), "wb") as f:
+        with open(input_folder /  "url_to_path_map.pickle", "wb") as f:
             pickle.dump(url_to_path_dict, f)
         
         return url_to_path_dict
     
-    def generate_dataset_dict(self, model: str):
+    def _generate_dataset_dict(self, model: str) -> Dict[str, Dict[str, str] | List]:
         filtered_set = self.annotations[self.annotations.bias_type == self.mode]
 
         list_of_tuples = []
@@ -109,20 +109,14 @@ class VLStereo(BaseDataset):
 
         return final_data
 
-    def create_train_llava_dataset(self) -> None:
+    def create_train_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
         raise NotImplementedError()
     
-    def create_test_llava_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="llava")
+    def create_test_llava_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(model="llava")
 
-        with open(os.path.join(self.output_folder, f"zeroshot_test_vlstereo_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
-
-    def create_train_clip_dataset(self) -> None:
+    def create_train_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
        raise NotImplementedError()
         
-    def create_test_clip_dataset(self) -> None:
-        final_data = self.generate_dataset_dict(model="clip")
-
-        with open(os.path.join(self.output_folder, f"clipzeroshot_test_vlstereo_{self.mode}.json"), "w") as f:
-            json.dump(final_data, f)
+    def create_test_clip_dataset(self) -> Dict[str, Dict[str, str] | List]:
+        return self._generate_dataset_dict(model="clip")
