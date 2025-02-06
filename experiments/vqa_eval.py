@@ -77,6 +77,8 @@ def main(args):
 
     model = model_factory(model_name)
 
+    model_type = "clip" if isinstance(model, CLIPEvalModel) else "llava"
+
     for dataset in datasets:
         
         dataset_config = data[dataset]
@@ -86,19 +88,23 @@ def main(args):
         input_folder = Path(dataset_config["input_folder"])
 
         for mode in modes:
-            data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, "llava")
+            data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, model_type)
 
-            evaluate_output = evaluate_model(model, data_examples, eval_class, model_name, include_image, batch_size)
+            evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size)
 
             evaluate_output["mode"] = mode
+
+            evaluate_output["model"] = model_name
 
             evaluate_output["dataset"] = dataset
 
             evaluate_output["include_image"] = include_image
 
+            print(evaluate_output)
+
             output.append(evaluate_output)
     
-    output_file = f"{model_name}_{'image_included' if include_image else 'no_image'}.ndjson"
+    output_file = f"{model_name.replace('/', '-')}_{'image_included' if include_image else 'no_image'}.ndjson"
     
     with open(output_dir / output_file, "w") as f:
         for item in data:
