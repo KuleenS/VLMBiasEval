@@ -107,3 +107,8 @@ class LLaVaEvalModel(EvalModel):
             inputs = self._tokenize_images_and_prompts(prompts, images, include_image)
 
             return self._get_outputs(inputs, output_labels)
+
+        else:
+            print(qs, image_files, " failed")
+
+            return []

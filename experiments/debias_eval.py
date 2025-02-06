@@ -8,7 +8,7 @@ import toml
 
 from unbiasae.dataset import dataset_eval_generator
 
-from unbiasae.eval import BaseEvaluateDataset
+from unbiasae.eval import *
 
 from experiments.models.debiased_llava import DeBiasedLLaVaEvalModel
 
@@ -48,8 +48,11 @@ def evaluate_dataset(model: DeBiasedLLaVaEvalModel, dataset, mode: str, eval_cla
 
                     model_outputs.append(item)
                 
-                evaluate_output = eval_class.evaluate(model_outputs)
-
+                if isinstance(eval_class, PATAEval) or isinstance(eval_class, VisoGenderEval):
+                    evaluate_output =  eval_class.evaluate(model_outputs, mode=mode)
+                else:
+                    evaluate_output =  eval_class.evaluate(model_outputs)
+                    
                 evaluate_output["model_id"] = model.model_name
 
                 evaluate_output["sae_release"] = sae_release

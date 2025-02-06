@@ -12,7 +12,7 @@ import toml
 
 from unbiasae.dataset import dataset_eval_generator
 
-from unbiasae.eval import BaseEvaluateDataset
+from unbiasae.eval import *
 
 from experiments.models import *
 
@@ -31,7 +31,7 @@ def batch_iterable(iterable, n=1):
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)]
     
-def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], eval: BaseEvaluateDataset, include_image: bool, batch_size: int):
+def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], eval: BaseEvaluateDataset, include_image: bool, batch_size: int, mode: str):
     output_labels = dataset["labels"]
 
     questions = dataset["data"]
@@ -57,7 +57,10 @@ def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], 
 
             model_outputs.append(line)
     
-    return eval.evaluate(model_outputs)
+    if isinstance(eval, PATAEval) or isinstance(eval, VisoGenderEval):
+        return eval.evaluate(model_outputs, mode=mode)
+    else:
+        return eval.evaluate(model_outputs)
 
 def main(args):
     with open(args.config, "r") as f:
@@ -90,7 +93,7 @@ def main(args):
         for mode in modes:
             data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, model_type)
 
-            evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size)
+            evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size, mode)
 
             evaluate_output["mode"] = mode
 

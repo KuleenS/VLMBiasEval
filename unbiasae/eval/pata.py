@@ -13,10 +13,7 @@ class PATAEval(BaseEvaluateDataset):
 
         self.outputs = ["A", "B", "C", "D", "E", "F", "G", "H"]
     
-    def evaluate(self, path: str) -> Dict[str, float]:
-        with open(path) as f:
-            data = json.load(f)
-
+    def evaluate(self, data: List[Dict[str, Any]]) -> Dict[str, float]:
         labels = [x["label"] for x in data]
 
         outputs = [x["output"] for x in data]

@@ -80,3 +80,7 @@ class DeBiasedLLaVaEvalModel(EvalModel):
         if image is not None:
             
             return self._get_outputs(prompt, image, output_labels)[0]
+    
+        else:
+            print(q, image_file, " fail")
+            return []
