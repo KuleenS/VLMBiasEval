@@ -7,7 +7,7 @@ from unbiasae.eval.base_evaluate_dataset import BaseEvaluateDataset
 class PATAEval(BaseEvaluateDataset):
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(header=["dataset", "model", "shots", "mode"])
 
         self.label_map = {"yes": 1, "no": 0}
 
