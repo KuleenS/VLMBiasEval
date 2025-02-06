@@ -4,7 +4,7 @@ import torch
 
 import PIL
 
-from PIL.Image import Image
+from PIL import Image
 
 from transformers import AutoTokenizer, AutoProcessor, AutoModelForImageTextToText
 
@@ -28,7 +28,7 @@ class LLaVaEvalModel(EvalModel):
 
         self.processor.tokenizer.pad_token_id = self.processor.tokenizer.eos_token_id
     
-    def _tokenize_images_and_prompts(self, prompts: List[str], images: List[Image], include_image: bool):
+    def _tokenize_images_and_prompts(self, prompts: List[str], images, include_image: bool):
         if "paligemma" in self.model_name:
             inputs = self.processor(text=prompts, images=images, padding=True, return_tensors="pt").to(torch.bfloat16).to("cuda:0")
             

@@ -4,7 +4,7 @@ import torch
 
 import PIL
 
-from PIL.Image import Image
+from PIL import Image
 
 from transformers import AutoTokenizer, AutoProcessor, AutoModelForImageTextToText
 
