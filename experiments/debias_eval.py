@@ -48,7 +48,7 @@ def evaluate_dataset(model: DeBiasedLLaVaEvalModel, dataset, mode: str, eval_cla
 
                     model_outputs.append(item)
                 
-                if isinstance(eval_class, PATAEval) or isinstance(eval_class, VisoGenderEval):
+                if isinstance(eval_class, UTKFaceEval) or isinstance(eval_class, VisoGenderEval):
                     evaluate_output =  eval_class.evaluate(model_outputs, mode=mode)
                 else:
                     evaluate_output =  eval_class.evaluate(model_outputs)
@@ -103,7 +103,7 @@ def main(args):
         for mode in modes:
             data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, "llava")
 
-            evaluate_output = evaluate_dataset(model, data_examples, eval_class)
+            evaluate_output = evaluate_dataset(model, data_examples, mode, eval_class, data)
 
             output_file = f"{dataset}_{mode}_{model_name}_{'image_included' if include_image else 'no_image'}.ndjson"
     
