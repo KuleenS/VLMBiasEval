@@ -50,12 +50,17 @@ class DeBiasedLLaVaEvalModel(EvalModel):
     def load_intervention(self, intervention_type: str, scaling_factor: float):
         self.module_and_hook_fn = self.wrapper.get_hook(intervention_type, self.model_params, scaling_factor)
     
-    def _process_image_and_prompt(self, image_file: str, prompt: str):
+    def _process_image_and_prompt(self, prompt: str, image_file: str):
         try:
             processed_image = Image.open(image_file).convert('RGB')
 
         except PIL.UnidentifiedImageError:
             processed_image =  None 
+        
+        if not self.include_image:
+            width, height = processed_image.size
+
+            processed_image = Image.new('RGB', (width, height))
     
         processed_prompt = f"<image>\n{prompt}"
 
@@ -75,12 +80,12 @@ class DeBiasedLLaVaEvalModel(EvalModel):
         return preds
 
     def predict(self, q: str, image_file: str, output_labels: List[str]):
-        prompt, image = self._process_image_and_prompt(q, image_file, self.include_image)
+        prompt, image = self._process_image_and_prompt(q, image_file)
 
         if image is not None:
             
-            return self._get_outputs(prompt, image, output_labels)[0]
+            return self._get_outputs([prompt], [image], output_labels)[0]
     
         else:
             print(q, image_file, " fail")
-            return []
+            return None

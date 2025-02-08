@@ -38,16 +38,18 @@ def evaluate_dataset(model: DeBiasedLLaVaEvalModel, dataset, mode: str, eval_cla
                 model.load_intervention(intervention, scaling_factor)
 
                 for item in questions:
-                    image, prompt = item["prompt"], item["prompt"]
+                    prompt, image  = item["prompt"], item["image"]
 
-                    pred = model.predict(image, prompt, output_labels)
+                    pred = model.predict(prompt, image, output_labels)
 
-                    item["model_id"] = model.model_name
+                    if pred is not None:
 
-                    item["output"] = output_labels[pred]
+                        item["model_id"] = model.model_name
 
-                    model_outputs.append(item)
-                
+                        item["output"] = output_labels[pred]
+
+                        model_outputs.append(item)
+                    
                 if isinstance(eval_class, UTKFaceEval) or isinstance(eval_class, VisoGenderEval):
                     evaluate_output =  eval_class.evaluate(model_outputs, mode=mode)
                 else:
@@ -108,8 +110,7 @@ def main(args):
             output_file = f"{dataset}_{mode}_{model_name}_{'image_included' if include_image else 'no_image'}.ndjson"
     
             with open(output_dir / output_file, "w") as f:
-                for item in evaluate_output:
-                    f.write(json.dumps(item) + "\n")
+                f.write(json.dumps(evaluate_output) + "\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
