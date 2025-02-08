@@ -57,7 +57,7 @@ def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], 
 
             model_outputs.append(line)
     
-    if isinstance(eval, PATAEval) or isinstance(eval, VisoGenderEval):
+    if isinstance(eval, UTKFaceEval) or isinstance(eval, VisoGenderEval):
         return eval.evaluate(model_outputs, mode=mode)
     else:
         return eval.evaluate(model_outputs)
@@ -110,7 +110,7 @@ def main(args):
     output_file = f"{model_name.replace('/', '-')}_{'image_included' if include_image else 'no_image'}.ndjson"
     
     with open(output_dir / output_file, "w") as f:
-        for item in data:
+        for item in output:
             f.write(json.dumps(item) + "\n")
 
 if __name__ == "__main__":

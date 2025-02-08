@@ -11,6 +11,7 @@ def dataset_eval_generator(dataset_name: str, input_folder: Path, mode: str, typ
         "pata": (PATA, PATAEval),
         "utkface": (UTKFace, UTKFaceEval),
         "visogender": (VisoGender, VisoGenderEval),
+        "adv_visogender": (AdversarialVisoGender, VisoGenderEval),
         "vlstereo": (VLStereo, VLStereoEval),
     }
 
