@@ -1,7 +1,7 @@
 # VLMBiasEval
 
 ## Description
-"VLMBiasEval" is a research project exploring the fairness and bias of Visual Language Models (VLLMs) like LLaVa.
+"VLMBiasEval" is a research project exploring the fairness and bias of Visual Language Models (VLLMs) like LLaVa and ways to debiasing them using SAE based methods
 
 ## Installation
 Clone the repository to your local machine:
@@ -14,45 +14,72 @@ cd VLMBiasEval
 conda env create -f vlmbiaseval.yaml
 ```
 
+## Library
+Our library unbiassae can be used for development and experiments. We have 3 folders
+
+### eval
+Output dataset evaluation
+
+### debias
+SAE tools to debias
+
+### dataset
+Dataset generators
+
 ## Scripts
 
-To run any script 
+We have two scripts
+
+### VQA Eval
+Evaluates CLIP and LLaVa models
 
 ```
-python -m src.scripts.<script_name> <args>
+python -m experiments.vqa_eval
+```
+Parameters
+- datasets: list of datasets to use from ["celeba", "pata", "utkface", "visogender", "vlstereo", "adv_visogender"]
+
+- include_image: include the image in the evaluation
+
+- batch_size: batch size to evaluate at
+
+- model_name: huggingface tag or path to model
+
+- output_dir: output dir for ndjson of outputs
+
+Full example config in `config224.toml`
+
+### Debias Eval
+Evaluates Paligemma with SAE based debiasing
+
+```
+python -m experiments.debias_eval
 ```
 
-### convert_dicom.py
-Converts dicom from VinDR to JPG
+Parameters
+- datasets: list of datasets to use from ["celeba", "pata", "utkface", "visogender", "vlstereo", "adv_visogender"]
 
-### evaluate.py
-Runs evaluation of output
+- include_image: include the image in the evaluation
 
-### generate_datasets.py
-Generates datasets from config.toml
+- batch_size: batch size to evaluate at
 
-### model_clip.py
-Evaluate CLIP model
+- model_name: huggingface tag or path to model
 
-To use medclip you must install it from the pip package or the repo (https://github.com/RyanWangZf/MedCLIP)
-However, it does have older versioning of some packages so please be mindful of conflicts that could occur
+- output_dir: output dir for ndjson of outputs
 
-### model_vqa.py
-Evaluate VQA model
+- interventions: list of sae based interventions to try ["constant_sae", "conditional_per_input","conditional_per_token","clamping","conditional_clamping"]
 
-### model_med_vqa.py
-Evaluate LLaVa-Med Model (you need to install LLaVa Med Repo before https://github.com/microsoft/LLaVA-Med)
+- scaling_factors: list of how to scale these interventions [-40, -20, -10, -5 , 0, 5, 10, 20, 40]
 
-### model_adversarial.py
-Evaluate VQA model on adversarial VisoGender 
+- sae_layers: list of layers to target
 
-### model_gemini.py
-Evaluate gemini
+- sae_releases: list of sae releases to target e.g. gemma-scope-2b-pt-mlp-canonical
 
-## Models
-- **LLaVa**: Set of LLaVa 1.6 models from 7B to 34B from llava-hf
-- **CLIP**: CLIP Large 224 and CLIP Large 336
-- **Gemini**: Gemini Flash 001 
+- sae_ids: list of sae ids to use e.g layer_0/width_65k/canonical
+
+- feature_idxs: features to steer on 
+
+Full example config in `debiasconfig224.toml`
 
 ### General Datasets
 1. **VisoGender**
@@ -76,12 +103,6 @@ Evaluate gemini
    - **Task**: Predict "blond hair" or "heavy makeup" as the target, with gender as the sensitive category.
    - **Original Article**: [CelebA](https://arxiv.org/pdf/1411.7766.pdf), [Gender Parity in CelebA](https://arxiv.org/pdf/2206.10843.pdf)
 
-### Medical Datasets
-6. **Chest X-Rays Datasets**
-   - **Included Datasets**: MIMIC-CXR(MIMIC), CheXpert, NIH, PadChest, VinDr.
-   - **Task**: Zero-Shot Diagnosis. Given a chest X-ray and a prompt, predict findings. Protected attributes may include age, demographic, income, etc.
-   - **Original Article**: [Chest X-Rays](https://arxiv.org/ftp/arxiv/papers/2402/2402.14815.pdf)
-
 ## Evaluation
 Evaluate the models based on:
 - Performance metrics: F1, Precision, Recall, Accuracy.
@@ -89,11 +110,3 @@ Evaluate the models based on:
 
 ## Contributing
 Contributions to "VLMBiasEval" are welcome. Please submit a pull request or open an issue to discuss potential changes or additions.
-
-## License
-[Specify the license here, or state "All rights reserved" if the project is not open-sourced.]
-
-## Related Works
-- [Related work 1](https://arxiv.org/pdf/2402.02207.pdf)
-- [Related work 2](https://arxiv.org/pdf/2303.10431.pdf)
-- [Related work 3](https://arxiv.org/pdf/2303.12734.pdf)
