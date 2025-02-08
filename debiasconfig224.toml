@@ -1,0 +1,26 @@
+datasets = ["visogender", "adv_visogender"]
+
+include_image = true
+
+batch_size = 1
+
+model_name = "google/paligemma2-3b-pt-224"
+
+output_dir = "outputs"
+
+interventions = ["constant_sae", "conditional_per_input","conditional_per_token","clamping","conditional_clamping"]
+
+scaling_factors = [-40, -20, -10, -5 , 0, 5, 10, 20, 40]
+
+sae_layers = [0,1,1,7,12,12,12,13,13,15,21,21,24]
+sae_releases = ["gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-mlp-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-mlp-canonical","gemma-scope-2b-pt-res-canonical","gemma-scope-2b-pt-mlp-canonical","gemma-scope-2b-pt-mlp-canonical","gemma-scope-2b-pt-res-canonical"]
+sae_ids = ["layer_0/width_65k/canonical","layer_1/width_16k/canonical","layer_1/width_16k/canonical","layer_7/width_65k/canonical","layer_12/width_1m/canonical","layer_12/width_262k/canonical","layer_12/width_524k/canonical","layer_13/width_65k/canonical","layer_13/width_65k/canonical","layer_15/width_65k/canonical","layer_21/width_16k/canonical","layer_21/width_65k/canonical","layer_24/width_65k/canonical"]
+feature_idxs = [59093,3055,8113,154,939443,169035,416358,43928,29296,7548,2252,41958,61821]
+
+[adv_visogender]
+input_folder="/data/user/ksasse/safety_tuned_llamas/visogender"
+modes = ["OP", "OO"]
+
+[visogender]
+input_folder="/data/user/ksasse/safety_tuned_llamas/visogender"
+modes = ["OP", "OO"]

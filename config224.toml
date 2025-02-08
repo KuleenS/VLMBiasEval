@@ -1,0 +1,33 @@
+datasets = ["celeba", "pata", "utkface", "visogender", "vlstereo", "adv_visogender"]
+
+include_image = true
+
+batch_size = 16
+
+model_name = "google/paligemma2-3b-pt-224"
+
+output_dir = "outputs"
+
+[adv_visogender]
+input_folder="/data/user/ksasse/safety_tuned_llamas/visogender"
+modes = ["OP", "OO"]
+
+[celeba]
+input_folder="/data/user/ksasse/safety_tuned_llamas/celeba"
+modes = ["blond_hair", "heavy_makeup"]
+
+[pata]
+input_folder="/data/user/ksasse/safety_tuned_llamas/pata_dataset"
+modes = ["races", "gender", "age"]
+
+[utkface]
+input_folder="/data/user/ksasse/safety_tuned_llamas/utkface"
+modes = ["race_gender", "race_age", "age_gender", "age_race", "gender_race", "gender_age"]
+
+[visogender]
+input_folder="/data/user/ksasse/safety_tuned_llamas/visogender"
+modes = ["OP", "OO"]
+
+[vlstereo]
+input_folder="/data/user/ksasse/safety_tuned_llamas/VLStereo"
+modes = ["race", "profession", "gender", "religion"]
