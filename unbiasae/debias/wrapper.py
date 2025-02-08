@@ -371,7 +371,6 @@ class InterventionWrapper:
         Note:
             Prompts must contain the model's BOS token
         """
-        print(batched_images, batched_prompts)
 
         inputs = self.processor(
             images=batched_images, text=batched_prompts, return_tensors="pt"

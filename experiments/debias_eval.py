@@ -107,6 +107,8 @@ def main(args):
 
             evaluate_output = evaluate_dataset(model, data_examples, mode, eval_class, data)
 
+            print(evaluate_output)
+
             output_file = f"{dataset}_{mode}_{model_name}_{'image_included' if include_image else 'no_image'}.ndjson"
     
             with open(output_dir / output_file, "w") as f:
