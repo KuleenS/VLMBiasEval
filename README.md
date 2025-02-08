@@ -14,40 +14,72 @@ cd VLMBiasEval
 conda env create -f vlmbiaseval.yaml
 ```
 
+## Library
+Our library unbiassae can be used for development and experiments. We have 3 folders
+
+### eval
+Output dataset evaluation
+
+### debias
+SAE tools to debias
+
+### dataset
+Dataset generators
+
 ## Scripts
 
-To run any script 
+We have two scripts
+
+### VQA Eval
+Evaluates CLIP and LLaVa models
 
 ```
-python -m src.scripts.<script_name> <args>
+python -m experiments.vqa_eval
+```
+Parameters
+- datasets: list of datasets to use from ["celeba", "pata", "utkface", "visogender", "vlstereo", "adv_visogender"]
+
+- include_image: include the image in the evaluation
+
+- batch_size: batch size to evaluate at
+
+- model_name: huggingface tag or path to model
+
+- output_dir: output dir for ndjson of outputs
+
+Full example config in `config224.toml`
+
+### Debias Eval
+Evaluates Paligemma with SAE based debiasing
+
+```
+python -m experiments.debias_eval
 ```
 
-### evaluate.py
-Runs evaluation of output
+Parameters
+- datasets: list of datasets to use from ["celeba", "pata", "utkface", "visogender", "vlstereo", "adv_visogender"]
 
-### generate_datasets.py
-Generates datasets from config.toml
+- include_image: include the image in the evaluation
 
-### model_clip.py
-Evaluate CLIP model
+- batch_size: batch size to evaluate at
 
-To use medclip you must install it from the pip package or the repo (https://github.com/RyanWangZf/MedCLIP)
-However, it does have older versioning of some packages so please be mindful of conflicts that could occur
+- model_name: huggingface tag or path to model
 
-### model_vqa.py
-Evaluate VQA model
+- output_dir: output dir for ndjson of outputs
 
-### model_adversarial.py
-Evaluate VQA model on adversarial VisoGender 
+- interventions: list of sae based interventions to try ["constant_sae", "conditional_per_input","conditional_per_token","clamping","conditional_clamping"]
 
-### model_gemini.py
-Evaluate gemini
+- scaling_factors: list of how to scale these interventions [-40, -20, -10, -5 , 0, 5, 10, 20, 40]
 
-## Models
-- **LLaVa**: Set of LLaVa 1.6 models from 7B to 34B from llava-hf
-- **CLIP**: CLIP Large 224 and CLIP Large 336
-- **Gemini**: Gemini Flash 001 
-- **PaliGemma**
+- sae_layers: list of layers to target
+
+- sae_releases: list of sae releases to target e.g. gemma-scope-2b-pt-mlp-canonical
+
+- sae_ids: list of sae ids to use e.g layer_0/width_65k/canonical
+
+- feature_idxs: features to steer on 
+
+Full example config in `debiasconfig224.toml`
 
 ### General Datasets
 1. **VisoGender**
