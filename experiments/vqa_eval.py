@@ -88,24 +88,27 @@ def main(args):
 
         modes = dataset_config["modes"]
 
+        prompts = dataset_config.get("prompts", [None])
+
         input_folder = Path(dataset_config["input_folder"])
 
-        for mode in modes:
-            data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, model_type)
+        for prompt in prompts: 
+            for mode in modes:
+                data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, model_type, prompt)
 
-            evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size, mode)
+                evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size, mode)
 
-            evaluate_output["mode"] = mode
+                evaluate_output["mode"] = mode
 
-            evaluate_output["model"] = model_name
+                evaluate_output["model"] = model_name
 
-            evaluate_output["dataset"] = dataset
+                evaluate_output["dataset"] = dataset
 
-            evaluate_output["include_image"] = include_image
+                evaluate_output["include_image"] = include_image
 
-            print(evaluate_output)
+                print(evaluate_output)
 
-            output.append(evaluate_output)
+                output.append(evaluate_output)
     
     output_file = f"{model_name.replace('/', '-')}_{'image_included' if include_image else 'no_image'}.ndjson"
     
