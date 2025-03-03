@@ -109,6 +109,6 @@ class LLaVaEvalModel(EvalModel):
             return self._get_outputs(inputs, output_labels)
 
         else:
-            print(qs, image_files, " failed")
+            # print(qs, image_files, " failed")
 
             return []
