@@ -16,7 +16,7 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class VisoGender(BaseDataset):
 
-    def __init__(self, input_folder: Path, mode: str) -> None:
+    def __init__(self, input_folder: Path, mode: str, question: str = None) -> None:
         super().__init__(input_folder)
 
         if mode not in ["OP", "OO"]:
@@ -56,7 +56,10 @@ class VisoGender(BaseDataset):
 
         self.annotations = self.annotations[~self.annotations.path.isna()]
 
-        self.question = "Which one is the correct caption of this image?\n"
+        if question is None:
+            self.question = question
+        else:
+            self.question = "Which one is the correct caption of this image?\n"
 
         self.prompt = "Answer with the option's letter from the given choices directly."
 

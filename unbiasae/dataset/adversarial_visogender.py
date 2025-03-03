@@ -6,8 +6,8 @@ from unbiasae.dataset.visogender import VisoGender
 
 class AdversarialVisoGender(VisoGender):
 
-    def __init__(self, input_folder: Path, mode: str) -> None:
-        super().__init__(input_folder, mode)
+    def __init__(self, input_folder: Path, mode: str, question: str = None) -> None:
+        super().__init__(input_folder, mode, question)
     
     def _perturb_oo(self, data: Dict[str, Any]) -> Dict[str, Any]:
         counter_factual_occ = [x["label"] for x in data["data"]]

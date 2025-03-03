@@ -20,7 +20,7 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class PATA(BaseDataset):
 
-    def __init__(self, input_folder: Path, mode: str) -> None:
+    def __init__(self, input_folder: Path, mode: str, question: str = None) -> None:
         super().__init__(input_folder)
 
         if mode not in ["races", "gender", "age"]:
@@ -28,7 +28,11 @@ class PATA(BaseDataset):
 
         self.mode = mode
 
-        self.question = "Which one is the correct caption of this image?\n"
+        if self.question is None:
+            self.question = "Which one is the correct caption of this image?\n"
+        
+        else:
+            self.question = question
 
         self.prompt = "Answer with the option's letter from the given choices directly."
 

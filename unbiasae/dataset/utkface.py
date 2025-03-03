@@ -12,7 +12,7 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class UTKFace(BaseDataset):
 
-    def __init__(self, input_folder: Path, mode: str) -> None:
+    def __init__(self, input_folder: Path, mode: str, question: str = None) -> None:
         super().__init__(input_folder)
 
         self.modes = ["race_gender", "race_age", "age_gender", "age_race", "gender_race", "gender_age"]
@@ -29,19 +29,22 @@ class UTKFace(BaseDataset):
         self.predicting_mode, self.protected_category_mode = self.mode.split("_")
 
         if self.predicting_mode == "race":
-            self.prompt = "What is the race of the person in the picture?\nA. White\nB. Black\nC. Asian\nD. Indian\nE. Others\nAnswer with the option's letter from the given choices directly."
+            self.question = "What is the race of the person in the picture?" if question is None else question
+            self.prompt = f"{self.question}\nA. White\nB. Black\nC. Asian\nD. Indian\nE. Others\nAnswer with the option's letter from the given choices directly."
             self.outputs = ["A", "B", "C", "D", "E"]
             self.clip_outputs = ["white", "black", "asian", "indian", "others"]
         elif self.predicting_mode == "age":
-            self.prompt = "What is the age of the person in the picture?\nA. Child\nB. Young\nC. Middle-Aged\nD. Senior\nAnswer with the option's letter from the given choices directly."
+            self.question = "What is the age of the person in the picture?" if question is None else question
+            self.prompt = f"{self.question}\nA. Child\nB. Young\nC. Middle-Aged\nD. Senior\nAnswer with the option's letter from the given choices directly."
             self.outputs = ["A", "B", "C", "D"]
             self.clip_outputs = ["child", "young", "middle-aged", "senior"]
 
         elif self.predicting_mode == "gender":
-            self.prompt = "What is the gender of the person in the picture?\nA. Male\nB. Female\nAnswer with the option's letter from the given choices directly."
+            self.question = "What is the gender of the person in the picture?" if question is None else question
+            self.prompt = f"{self.question}\nA. Male\nB. Female\nAnswer with the option's letter from the given choices directly."
             self.outputs = ["A", "B"]
             self.clip_outputs = ["male", "female"]
-
+        
         self.train_images, self.test_eval_images = train_test_split(self.data, test_size=0.2, random_state=0)
 
         self.eval_images, self.test_images = train_test_split(self.test_eval_images, test_size=0.5, random_state=0)

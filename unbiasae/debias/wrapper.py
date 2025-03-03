@@ -356,6 +356,7 @@ class InterventionWrapper:
         batched_prompts: list[str],
         batched_images: list[Image],
         module_and_hook_fn: Optional[tuple[torch.nn.Module, Callable]] = None,
+        max_new_tokens: int = None
     ) -> list[str]:
         """Generate text with optional interventions.
 
@@ -376,28 +377,48 @@ class InterventionWrapper:
             images=batched_images, text=batched_prompts, return_tensors="pt"
         ).to(self.device)
 
-        if module_and_hook_fn:
-            module, hook_fn = module_and_hook_fn
-            context_manager = add_hook(
-                module=module,
-                hook=hook_fn,
-            )
-            with context_manager:
-                generated_toks = self.model.generate(**inputs,
-                            max_new_tokens=1,
-                            output_scores=True,
-                            return_dict_in_generate=True,
-                            do_sample=False,
-                        )
-        else:
-            generated_toks = self.model.generate(**inputs,
-                            max_new_tokens=1,
-                            output_scores=True,
-                            return_dict_in_generate=True,
-                            do_sample=False,
-                        )
+        if max_new_tokens is None:
 
-        return generated_toks['scores'][0]
+            if module_and_hook_fn:
+                module, hook_fn = module_and_hook_fn
+                context_manager = add_hook(
+                    module=module,
+                    hook=hook_fn,
+                )
+                with context_manager:
+                    generated_toks = self.model.generate(**inputs,
+                                max_new_tokens=1,
+                                output_scores=True,
+                                return_dict_in_generate=True,
+                                do_sample=False,
+                            )
+            else:
+                generated_toks = self.model.generate(**inputs,
+                                max_new_tokens=1,
+                                output_scores=True,
+                                return_dict_in_generate=True,
+                                do_sample=False,
+                            )
+
+            return generated_toks['scores'][0]
+
+        else:
+            if module_and_hook_fn:
+                module, hook_fn = module_and_hook_fn
+                context_manager = add_hook(
+                    module=module,
+                    hook=hook_fn,
+                )
+                with context_manager:
+                    generated_toks = self.model.generate(**inputs,
+                                max_new_tokens=max_new_tokens, 
+                    )
+            else:
+                generated_toks = self.model.generate(**inputs,
+                                    max_new_tokens=max_new_tokens,
+                                )
+
+            return generated_toks
 
     def get_hook(
         self,
