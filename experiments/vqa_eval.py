@@ -100,6 +100,8 @@ def main(args):
 
                 evaluate_output["mode"] = mode
 
+                evaluate_output["prompt"] = prompt
+
                 evaluate_output["model"] = model_name
 
                 evaluate_output["dataset"] = dataset
