@@ -57,9 +57,9 @@ class VisoGender(BaseDataset):
         self.annotations = self.annotations[~self.annotations.path.isna()]
 
         if question is None:
-            self.question = question
-        else:
             self.question = "Which one is the correct caption of this image?\n"
+        else:
+            self.question = question
 
         self.prompt = "Answer with the option's letter from the given choices directly."
 
