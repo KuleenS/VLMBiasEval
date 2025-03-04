@@ -25,7 +25,7 @@ class DeBiasedLLaVaEvalModel(EvalModel):
 
         self.processor = AutoProcessor.from_pretrained(self.model_name)
 
-        self.model = AutoModelForImageTextToText.from_pretrained(self.model_name, low_cpu_mem_usage=True).to("cuda")
+        self.model = AutoModelForImageTextToText.from_pretrained(self.model_name, low_cpu_mem_usage=True, torch_dtype=torch.bfloat16, device_map="auto")
 
         self.processor.tokenizer.padding_side = "left"
 
@@ -82,7 +82,7 @@ class DeBiasedLLaVaEvalModel(EvalModel):
             return preds
 
         else:
-            return self.tokenizer.batch_decode(g.cpu(), skip_special_tokens=True).strip()
+            return self.tokenizer.batch_decode(g.cpu(), skip_special_tokens=True)[0].strip()
 
     def predict(self, q: str, image_file: str, output_labels: List[str], max_new_tokens: int = None):
         prompt, image = self._process_image_and_prompt(q, image_file)
