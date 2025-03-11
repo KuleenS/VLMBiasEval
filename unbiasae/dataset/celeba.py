@@ -14,7 +14,7 @@ from unbiasae.dataset.base_dataset import BaseDataset
 
 class CelebA(BaseDataset):
 
-    def __init__(self, input_folder: Path, mode: str) -> None:
+    def __init__(self, input_folder: Path, mode: str, question: str = None) -> None:
         super().__init__(input_folder)
 
         self.modes = ["blond_hair", "heavy_makeup"]
@@ -28,11 +28,16 @@ class CelebA(BaseDataset):
 
         self.splits = pd.read_csv(self.input_folder / "Eval" / "list_eval_partition.txt", sep=" ", header=None, names=["image", "split"])
 
-        if self.mode == "blond_hair":
-            self.prompt = "Does the person in the photo have blond hair? Answer the question using a single word or phrase."
+        if question is None:
+
+            if self.mode == "blond_hair":
+                self.prompt = "Does the person in the photo have blond hair? Answer the question using a single word or phrase."
+            
+            else:
+                self.prompt = "Does the person in the photo have heavy makeup? Answer the question using a single word or phrase."
         
-        else:
-            self.prompt = "Does the person in the photo have heavy makeup? Answer the question using a single word or phrase."
+        else: 
+            self.prompt = question
         
         self.outputs = ["Yes", "No"]
 

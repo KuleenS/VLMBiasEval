@@ -22,7 +22,7 @@ class LLaVaEvalModel(EvalModel):
 
         self.processor = AutoProcessor.from_pretrained(self.model_name)
 
-        self.model = AutoModelForImageTextToText.from_pretrained(self.model_name, low_cpu_mem_usage=True).to("cuda")
+        self.model = AutoModelForImageTextToText.from_pretrained(self.model_name, low_cpu_mem_usage=True, torch_dtype=torch.bfloat16, device_map="auto")
 
         self.processor.tokenizer.padding_side = "left"
 
@@ -109,6 +109,6 @@ class LLaVaEvalModel(EvalModel):
             return self._get_outputs(inputs, output_labels)
 
         else:
-            print(qs, image_files, " failed")
+            # print(qs, image_files, " failed")
 
             return []

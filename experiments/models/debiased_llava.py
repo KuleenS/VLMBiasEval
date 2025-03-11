@@ -25,7 +25,7 @@ class DeBiasedLLaVaEvalModel(EvalModel):
 
         self.processor = AutoProcessor.from_pretrained(self.model_name)
 
-        self.model = AutoModelForImageTextToText.from_pretrained(self.model_name, low_cpu_mem_usage=True).to("cuda")
+        self.model = AutoModelForImageTextToText.from_pretrained(self.model_name, low_cpu_mem_usage=True, torch_dtype=torch.bfloat16, device_map="auto")
 
         self.processor.tokenizer.padding_side = "left"
 
@@ -66,25 +66,34 @@ class DeBiasedLLaVaEvalModel(EvalModel):
 
         return processed_prompt, processed_image
     
-    def _get_outputs(self, prompt, image, output_labels):
-        g = self.wrapper.generate(prompt, image, self.module_and_hook_fn)
+    def _get_outputs(self, prompt, image, output_labels, max_new_tokens):
+        g = self.wrapper.generate(prompt, image, self.module_and_hook_fn, max_new_tokens)
 
-        preds = []
+        if max_new_tokens is None:
 
-        for i in g:
-            pred_options_logits = torch.stack([i[self.tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
-            pred = pred_options_logits.argmax(dim=-1).item()
+            preds = []
 
-            preds.append(pred)
-        
-        return preds
+            for i in g:
+                pred_options_logits = torch.stack([i[self.tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
+                pred = pred_options_logits.argmax(dim=-1).item()
 
-    def predict(self, q: str, image_file: str, output_labels: List[str]):
+                preds.append(pred)
+            
+            return preds
+
+        else:
+            return self.tokenizer.batch_decode(g.cpu(), skip_special_tokens=True)[0].strip()
+
+    def predict(self, q: str, image_file: str, output_labels: List[str], max_new_tokens: int = None):
         prompt, image = self._process_image_and_prompt(q, image_file)
 
         if image is not None:
-            
-            return self._get_outputs([prompt], [image], output_labels)[0]
+            outputs = self._get_outputs([prompt], [image], output_labels, max_new_tokens)
+
+            if max_new_tokens is None:
+                return outputs[0]
+            else:
+                return outputs
     
         else:
             print(q, image_file, " fail")
