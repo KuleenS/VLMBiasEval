@@ -50,7 +50,7 @@ def evaluate_dataset(model: DeBiasedLLaVaEvalModel, dataset, mode: str, eval_cla
                             item["output"] = output_labels[pred]
 
                         else:
-                            item["model_id"] = model.model_name
+                            item["output"] = pred
 
                         model_outputs.append(item)
                 

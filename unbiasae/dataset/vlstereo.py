@@ -23,7 +23,7 @@ class VLStereo(BaseDataset):
 
         self.mode = mode
 
-        self.question = "Which one is the correct caption of this image?\n" if self.question is None else question
+        self.question = "Which one is the correct caption of this image?\n" if question is None else question
 
         self.prompt = "Answer with the option's letter from the given choices directly."
 

@@ -28,7 +28,7 @@ class PATA(BaseDataset):
 
         self.mode = mode
 
-        if self.question is None:
+        if question is None:
             self.question = "Which one is the correct caption of this image?\n"
         
         else:
