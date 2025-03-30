@@ -31,7 +31,7 @@ def batch_iterable(iterable, n=1):
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)]
     
-def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], eval: BaseEvaluateDataset, include_image: bool, batch_size: int, mode: str):
+def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], eval: BaseEvaluateDataset, include_image: bool, batch_size: int, mode: str, max_new_tokens: int = None):
     output_labels = dataset["labels"]
 
     questions = dataset["data"]
@@ -46,21 +46,30 @@ def evaluate_model(model: EvalModel, dataset: Dict[str, Dict[str, str] | List], 
         qs = [x["prompt"] for x in batch]
 
         if isinstance(model, LLaVaEvalModel):
-            preds = model.predict(qs, image_files, output_labels, include_image)
+            preds = model.predict(qs, image_files, output_labels, include_image, max_new_tokens)
         else:
             preds = model.predict(qs, image_files, include_image)
            
         for line, pred in zip(batch, preds):
             line["model_id"] = model.model_name
 
-            line["output"] = output_labels[pred]
+            if max_new_tokens is None:
+                line["output"] = output_labels[pred]
 
+            else:
+                line["output"] = pred
+            
             model_outputs.append(line)
-    
-    if isinstance(eval, UTKFaceEval) or isinstance(eval, VisoGenderEval):
-        return eval.evaluate(model_outputs, mode=mode)
+
+    if max_new_tokens is None:
+        if isinstance(eval, UTKFaceEval) or isinstance(eval, VisoGenderEval):
+            return eval.evaluate(model_outputs, mode=mode)
+        else:
+            return eval.evaluate(model_outputs)
     else:
-        return eval.evaluate(model_outputs)
+        output = {"outputs": model_outputs}
+
+        return output
 
 def main(args):
     with open(args.config, "r") as f:
@@ -82,6 +91,8 @@ def main(args):
 
     model_type = "clip" if isinstance(model, CLIPEvalModel) else "llava"
 
+    max_new_tokens = data.get("max_new_tokens", None)
+
     for dataset in datasets:
         
         dataset_config = data[dataset]
@@ -96,7 +107,7 @@ def main(args):
             for mode in modes:
                 data_examples, eval_class = dataset_eval_generator(dataset, input_folder, mode, model_type, prompt)
 
-                evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size, mode)
+                evaluate_output = evaluate_model(model, data_examples, eval_class, include_image, batch_size, mode, max_new_tokens)
 
                 evaluate_output["mode"] = mode
 
@@ -107,8 +118,6 @@ def main(args):
                 evaluate_output["dataset"] = dataset
 
                 evaluate_output["include_image"] = include_image
-
-                print(evaluate_output)
 
                 output.append(evaluate_output)
     
