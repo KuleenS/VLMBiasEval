@@ -78,35 +78,44 @@ class LLaVaEvalModel(EvalModel):
             
         return prompts, loaded_images
 
-    def _get_outputs(self, inputs, output_labels):
-        with torch.inference_mode():
-            output = self.model.generate(**inputs,
-                        max_new_tokens=1,
-                        output_scores=True,
-                        return_dict_in_generate=True,
-                        do_sample=False,
-                    )
+    def _get_outputs(self, inputs, output_labels, max_new_tokens):
+
+        if max_new_tokens is None:
+            with torch.inference_mode():
+                output = self.model.generate(**inputs,
+                            max_new_tokens=1,
+                            output_scores=True,
+                            return_dict_in_generate=True,
+                            do_sample=False,
+                        )
+                
+                g = output['scores'][0]
+
+                preds = []
+
+                for i in g:
+                    pred_options_logits = torch.stack([i[self.tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
+                    pred = pred_options_logits.argmax(dim=-1).item()
+
+                    preds.append(pred)
+        else:
+            with torch.inference_mode():
+                output = self.model.generate(**inputs,
+                            max_new_tokens=max_new_tokens,
+                        )
             
-            g = output['scores'][0]
-
-            preds = []
-
-            for i in g:
-                pred_options_logits = torch.stack([i[self.tokenizer.convert_tokens_to_ids(y_label)] for y_label in output_labels])
-                pred = pred_options_logits.argmax(dim=-1).item()
-
-                preds.append(pred)
+            preds = [x.strip() for x in self.tokenizer.batch_decode(output.cpu(), skip_special_tokens=True)]
         
         return preds
 
-    def predict(self, qs: List[str], image_files: List[str], output_labels: List[str], include_image: bool):
+    def predict(self, qs: List[str], image_files: List[str], output_labels: List[str], include_image: bool, max_new_tokens: int = None):
         prompts, images = self._process_images_and_prompts(qs, image_files, include_image)
 
         if len(images) != 0 and len(prompts) != 0:
             
             inputs = self._tokenize_images_and_prompts(prompts, images, include_image)
 
-            return self._get_outputs(inputs, output_labels)
+            return self._get_outputs(inputs, output_labels, max_new_tokens)
 
         else:
             # print(qs, image_files, " failed")
